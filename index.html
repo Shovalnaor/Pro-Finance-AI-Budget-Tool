@@ -551,6 +551,24 @@
             margin-bottom: 8px;
         }
 
+        /* About Section Styles */
+        .about-section {
+            background: var(--white);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+        .about-section h1 { color: var(--primary); margin-bottom: 10px; }
+        .about-section h2 { color: var(--primary-dark); margin-top: 30px; border-bottom: 2px solid var(--bg); padding-bottom: 5px; }
+        .about-section h3 { margin-top: 20px; }
+        .about-section p { margin-bottom: 15px; }
+        .about-section ul { margin-bottom: 15px; padding-right: 20px; }
+        .about-section li { margin-bottom: 8px; }
+        .about-footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--bg); font-size: 0.9rem; color: #666; }
+
         @media (max-width: 768px) {
             .charts-row, .charts-half {
                 grid-template-columns: 1fr;
@@ -589,6 +607,7 @@
         <button class="tab-btn" onclick="switchTab('tab-forecast', this)">🔮 תחזית</button>
         <button class="tab-btn" onclick="switchTab('tab-journal', this)">📝 יומן והזנה</button>
         <button class="tab-btn" onclick="switchTab('tab-settings', this)">⚙️ הגדרות</button>
+        <button class="tab-btn" onclick="switchTab('tab-about', this)">ℹ️ אודות</button>
     </div>
 
     <div class="content-area">
@@ -842,6 +861,68 @@
                         <p style="margin:10px 0;">גרסה: <strong>V14.0</strong></p>
                         <p style="margin:10px 0; font-size:0.85rem; color:#999;">עדכון אחרון: 2025</p>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-about" class="tab-pane">
+            <div class="about-section">
+                <h1>PRO-FINANCE V14.0</h1>
+                <p>מערכת חכמה לניהול פיננסי אישי שנבנתה כדי לפתור צרכי תקציב בעולם האמיתי.</p>
+
+                <h2>אודות הפרויקט</h2>
+                <p>אני בוגר הנדסת תעשייה וניהול שהתעייף מלג'נגל בין אפליקציות בנק שונות וגיליונות אקסל רק כדי להבין לאן הכסף שלי הולך בכל חודש. אחרי שניסיתי שלל אפליקציות לניהול תקציב שהיו יקרות מדי, בעלות חווית משתמש (UX) גרועה, או שלא תמכו בעברית כמו שצריך – החלטתי לבנות פתרון משלי.</p>
+                <p>הפרויקט הזה התחיל כמעקב הוצאות פשוט והתפתח למערכת ניהול פיננסי מלאה במהלך חודשים של שימוש יומיומי ואיטרציות (שיפורים מחזוריים). המערכת תוכננה במיוחד לשוק הישראלי עם ממשק בעברית, מטבע שקלי, ויבוא ישיר מהבנקים המקומיים.</p>
+                <p>הבעיה המרכזית שרציתי לפתור הייתה פשוטה: הייתי צריך לדעת אם אני עומד לחרוג מהתקציב לפני שזה קורה, ולא אחרי שאני עובר על פירוט האשראי בסוף החודש. כמו כן, רציתי משהו שמכבד את הפרטיות שלי ושומר את כל הנתונים באופן מקומי על המכשיר שלי.</p>
+
+                <h2>פיצ'רים מרכזיים</h2>
+                <p>המערכת כוללת מספר מודולים שבניתי תוך כדי זיהוי צרכים בשימוש היומיומי שלי:</p>
+                <ul>
+                    <li><strong>לוח בקרה (Dashboard):</strong> נותן תמונת מצב מיידית של המצב הפיננסי. סך הכנסות והוצאות שנתי, יתרה נוכחית וממוצע חודשי. ישנה גם טבלת סטטוס תקציב שמראה באילו קטגוריות המצב טוב ובאילו נדרשת תשומת לב.</li>
+                    <li><strong>מעקב הוצאות (Expense Tracking):</strong> המקום שבו רוב העבודה מתבצעת. ניתן להוסיף עסקאות ידנית או לייבא אותן ישירות מדפי הבנק. למערכת יש מנוע לוגי מובנה שמקטלג אוטומטית עסקאות לפי מילות מפתח.</li>
+                    <li><strong>התראות תקציב (Budget Alerts):</strong> המערכת עוקבת אחר ההוצאות בזמן אמת ומזהירה כשמתקרבים לקצה הגבול. היא משתמשת במערכת דו-שלבית: התראות שבועיות כשמגיעים ל-25% מהתקציב החודשי לקטגוריה, והתראות חודשיות כשחורגים ב-100%.</li>
+                    <li><strong>יעדי חיסכון (Savings Goals):</strong> מאפשר להגדיר מטרות פיננסיות כמו חתונה, חופשה או קרן חירום. המערכת עוקבת אחר ההתקדמות ומחשבת כמה צריך לחסוך בכל חודש כדי להגיע ליעד בזמן.</li>
+                    <li><strong>כלי ניתוח (Analysis Tools):</strong> כוללים פילוחים חודשיים עם גרפים של הוצאות יומיות, מגמות של קטגוריות לאורך זמן, ותחזית הוצאה המבוססת על ההיסטוריה שלך.</li>
+                </ul>
+
+                <h2>מימוש טכני</h2>
+                <p>האפליקציה כולה רצה כקובץ HTML בודד הכולל בתוכו CSS ו-JavaScript. ללא Frameworks, ללא תהליכי Build מורכבים וללא צורך בשרת (Server). פשוט פותחים את הקובץ בדפדפן וזה עובד.</p>
+                <ul>
+                    <li><strong>HTML5, CSS3 ו-Vanilla JavaScript</strong> מטפלים בפונקציונליות הליבה.</li>
+                    <li><strong>Chart.js</strong> מספקת את הוויזואליזציות.</li>
+                    <li><strong>SheetJS</strong> מטפלת בפענוח קבצי אקסל לייבוא מהבנק.</li>
+                    <li><strong>LocalStorage</strong> שומר את כל הנתונים על המכשיר באופן מקומי ופרטי.</li>
+                </ul>
+
+                <h2>איך הפרויקט נבנה</h2>
+                <p>השתמשתי בכלי AI כ"מאיץ פיתוח" בזמן שאני התמקדתי בארכיטקטורה ובלוגיקה העסקית. התחלתי במיפוי מדויק של הפיצ'רים, תכננתי את מבני הנתונים ואת זרימת הלוגיקה, והשתמשתי ב-AI לייצור מימוש הקוד תוך בדיקה קפדנית ואיטרציות.</p>
+
+                <h2>מה למדתי</h2>
+                <ul>
+                    <li>מוצרים אמיתיים דורשים ליטוש מתמיד.</li>
+                    <li>איכות נתונים זה קשה משזה נראה (טיפול במקרי קצה של ייבוא מהבנק).</li>
+                    <li>ברירות מחדל טובות עדיפות על התאמה אישית אינסופית.</li>
+                    <li>חווית משתמש היא הפחתת חיכוך.</li>
+                    <li>פרטיות כחלק מהתכנון (Privacy by Design) בונה אמון.</li>
+                </ul>
+
+                <h2>מגבלות נוכחיות</h2>
+                <ul>
+                    <li>הנתונים נשמרים ב-LocalStorage (סכנת אובדן בניקוי נתוני דפדפן).</li>
+                    <li>אין סנכרון בין מכשירים כיוון שהכל מקומי.</li>
+                    <li>זיהוי קטגוריות מבוסס מילות מפתח קבועות מראש.</li>
+                    <li>תוכנן בעיקר לשימוש במחשב (Desktop).</li>
+                </ul>
+
+                <h2>למה אני משתף את זה</h2>
+                <p>בניתי את PRO-FINANCE בעיקר לעצמי, אך הוא מדגים את היכולת שלי לזהות בעיה אמיתית, להתמודד עם אתגרים מורכבים באופן עצמאי, ולנהל פרויקט מקונספט ראשוני ועד למוצר מלוטש. הוא מייצג גישה מודרנית לבניית תוכנה בעזרת AI.</p>
+
+                <div class="about-footer">
+                    <h3>יצירת קשר</h3>
+                    <p><strong>שובל נאור</strong> - בוגר הנדסת תעשייה וניהול</p>
+                    <p>אימייל: <a href="mailto:shovaln1310@gmail.com">shovaln1310@gmail.com</a></p>
+                    <p>לינקדאין: <a href="https://www.linkedin.com/in/shoval-naor" target="_blank">linkedin.com/in/shoval-naor</a></p>
+                    <p>© 2025 שובל נאור. כל הזכויות שמורות.</p>
                 </div>
             </div>
         </div>
@@ -1715,29 +1796,17 @@
                 const imported = JSON.parse(e.target.result);
                 console.log('📥 קובץ נטען:', imported);
                 
-                // Check different JSON structures
                 if(Array.isArray(imported)) {
-                    // Simple array format
                     db = imported;
-                    console.log('✅ פורמט מערך פשוט - נטענו', db.length, 'רשומות');
                 } else if(imported.data && Array.isArray(imported.data)) {
-                    // Wrapped format with data property
                     db = imported.data;
                     if(imported.budgets) budgets = imported.budgets;
                     if(imported.goals) goals = imported.goals;
-                    console.log('✅ פורמט מלא - נטענו', db.length, 'רשומות');
                 } else if(imported.version) {
-                    // New format with version
                     db = imported.data || [];
                     budgets = imported.budgets || {};
                     goals = imported.goals || [];
-                    console.log('✅ פורמט V14 - נטענו', db.length, 'רשומות');
                 } else {
-                    // Try to extract data from object
-                    const possibleKeys = Object.keys(imported);
-                    console.log('🔍 מפתחות זמינים:', possibleKeys);
-                    
-                    // Try common key names
                     if(imported.transactions) db = imported.transactions;
                     else if(imported.records) db = imported.records;
                     else if(imported.items) db = imported.items;
@@ -1746,22 +1815,18 @@
                     }
                 }
                 
-                // Validate data structure
                 if(!Array.isArray(db) || db.length === 0) {
                     throw new Error('הקובץ ריק או במבנה לא תקין');
                 }
                 
-                // Validate each record has required fields
                 const validRecords = db.filter(x => 
                     x.date && x.amount && (x.cat || x.category)
                 );
                 
                 if(validRecords.length < db.length) {
-                    console.warn('⚠️ חלק מהרשומות חסרות שדות. נטענו:', validRecords.length, 'מתוך', db.length);
                     db = validRecords;
                 }
                 
-                // Normalize field names if needed
                 db = db.map(x => ({
                     id: x.id || Date.now() + Math.random(),
                     date: x.date,
@@ -1777,20 +1842,9 @@
                 renderAll();
                 
                 showToast(`✅ נטענו ${db.length} רשומות בהצלחה!`, 'success');
-                console.log('✅ ייבוא הושלם:', {
-                    records: db.length,
-                    budgets: Object.keys(budgets).length,
-                    goals: goals.length
-                });
             } catch(err) {
                 console.error('❌ שגיאה בטעינה:', err);
                 showToast(`❌ שגיאה: ${err.message}`, 'warning');
-                
-                // Show detailed error in console
-                console.log('💡 עזרה: הקובץ צריך להיות באחד מהפורמטים הבאים:');
-                console.log('1. מערך פשוט: [{"date":"2025-01-01","amount":100,...}]');
-                console.log('2. אובייקט עם data: {"data":[...],"budgets":{...}}');
-                console.log('3. פתח את Console (F12) כדי לראות את המבנה שנטען');
             }
         };
         r.readAsText(i.files[0]);
@@ -1802,7 +1856,6 @@
     renderGoals();
 
     console.log('%c💎 PRO-FINANCE V14.0', 'font-size:24px; color:#0f766e; font-weight:bold;');
-    console.log('%cמערכת ניהול פיננסי מתקדמת', 'font-size:14px; color:#666;');
 </script>
 </body>
 </html>
