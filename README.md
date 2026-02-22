@@ -1,4 +1,4 @@
-# PRO-FINANCE DIAMOND V3.3 + AI
+# PRO-FINANCE + AI
 
 A smart, privacy-first personal finance management system built to solve real-world budgeting needs. 
 
