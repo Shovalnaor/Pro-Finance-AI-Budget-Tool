@@ -2,7 +2,7 @@
 
 A smart, privacy-first personal finance management system built to solve real-world budgeting needs. 
 
-[Live Demo Link Here - https://shovalnaor.github.io/Pro-Finance-AI-Budget-Tool/] *(Note: Use Access Code PRO-2026 to enter)*
+[Live Demo Link Here - https://shovalnaor.github.io/Pro-Finance-AI-Budget-Tool/] 
 
 ---
 
