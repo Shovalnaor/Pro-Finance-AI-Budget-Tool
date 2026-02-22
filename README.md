@@ -1,4 +1,4 @@
-# PRO-FINANCE V14.0
+# PRO-FINANCE 
 
 A smart personal finance management system built to solve real-world budgeting needs.
 [Live Demo Link Here - https://shovalnaor.github.io/Pro-Finance-AI-Budget-Tool/]
