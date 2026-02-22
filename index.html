@@ -111,8 +111,6 @@
         .auto-tag { position: absolute; top: 15px; left: 15px; background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; display: none; animation: pulse 0.5s ease-in-out; pointer-events: none; }
         html[dir="ltr"] .auto-tag { left: auto; right: 15px; }
         @keyframes pulse { 0% {transform: scale(0.9); opacity: 0.7;} 50% {transform: scale(1.1);} 100% {transform: scale(1); opacity: 1;} }
-        
-        #login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 20000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
 
         /* --- ABOUT TAB STYLES --- */
         .about-card { background: var(--white); border-radius: var(--radius); padding: 25px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05); }
@@ -140,16 +138,6 @@
     </style>
 </head>
 <body>
-
-    <div id="login-overlay">
-        <h1 style="font-size:3rem; margin-bottom:10px; font-weight:900; letter-spacing: -1px;">PRO-FINANCE <span style="color:#10b981">DIAMOND</span></h1>
-        <p style="opacity:0.7; margin-bottom:40px;" data-i18n="loginSub">מערכת ההפעלה הפיננסית שלך.</p>
-        <div style="background:white; padding:40px; border-radius:20px; width:340px; color:#333; text-align:center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
-            <input type="password" id="licenseInput" class="input-control" data-i18n-placeholder="loginPlaceholder" placeholder="קוד גישה" style="text-align:center; margin-bottom:20px; font-size:1.3rem; letter-spacing: 3px;">
-            <button class="btn-primary" style="width:100%; height:50px; font-size:1.1rem;" onclick="checkLogin()" data-i18n="loginBtn">כניסה</button>
-            <p style="margin-top:20px; color:#999; font-size:0.85rem;" data-i18n="loginCode">קוד: PRO-2026</p>
-        </div>
-    </div>
 
     <header>
         <div style="font-weight:900; font-size:1.4rem; display:flex; align-items:center; gap:12px;">
@@ -382,9 +370,10 @@
                 <div class="card">
                     <h3 style="margin-bottom:15px;" data-i18n="setMgmtTitle"><i class="fas fa-database"></i> ניהול נתונים</h3>
                     <button class="btn-primary" style="width:100%; margin-bottom:10px;" onclick="exportData()" data-i18n="setExport"><i class="fas fa-download"></i> ייצוא גיבוי (JSON)</button>
-                    <button class="btn-primary" style="width:100%; background:var(--info);" onclick="document.getElementById('file-backup').click()" data-i18n="setImport"><i class="fas fa-upload"></i> שחזור מגיבוי</button>
+                    <button class="btn-primary" style="width:100%; background:var(--info); margin-bottom:10px;" onclick="document.getElementById('file-backup').click()" data-i18n="setImport"><i class="fas fa-upload"></i> שחזור מגיבוי</button>
                     <input type="file" id="file-backup" style="display:none" onchange="importBackup(this)">
-                    <button class="btn-primary" style="width:100%; background:var(--danger); margin-top:15px;" onclick="hardReset()" data-i18n="setReset"><i class="fas fa-trash-alt"></i> איפוס מלא של המערכת</button>
+                    <button class="btn-primary" style="width:100%; background:var(--warning); margin-bottom:10px; color:#000;" onclick="loadDemoData()" data-i18n="setDemo">🎁 טען נתוני הדגמה</button>
+                    <button class="btn-primary" style="width:100%; background:var(--danger); margin-top:5px;" onclick="hardReset()" data-i18n="setReset"><i class="fas fa-trash-alt"></i> איפוס מלא של המערכת</button>
                 </div>
 
                 <div class="card">
@@ -548,7 +537,6 @@
     // --- FULL TRANSLATIONS DICTIONARY ---
     const translations = {
         he: {
-            loginSub: "מערכת ההפעלה הפיננסית שלך.", loginPlaceholder: "קוד גישה", loginBtn: "כניסה", loginCode: "קוד: PRO-2026",
             navDash: "📊 מבט על", navJournal: "📝 יומן", navMonthly: "📅 חודשי", navCat: "🔍 קטגוריות", navGoals: "🎯 יעדים", navForecast: "🔮 תחזית", navRecurring: "🔄 קבע", navSettings: "⚙️ הגדרות", navAbout: "ℹ️ אודות",
             healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", budgetStatus: "מעקב תקציב חודשי", trendTitle: "מגמת הכנסות מול הוצאות",
             aiHeading: "🤖 סוכן אסטרטגיה פיננסית", aiDesc1: "ה-AI ינתח את ההוצאות שלך ויגיד לך את האמת על הניהול הכספי שלך. <strong>הוא מונחה לא להגיד לך מה שאתה רוצה לשמוע</strong>, אלא לבקר בצורה אובייקטיבית וישירה את ההוצאות המיותרות ולתת פתרונות אמיתיים.", aiPlaceholder: "הכנס מפתח API (AIza...)", aiBtn: "✨ נתח את התיק הפיננסי שלי", aiLoading: "מנתח נתונים באובייקטיביות, נא להמתין...",
@@ -558,7 +546,7 @@
             goalsTitle: "יעדי חיסכון ומטרות", btnNewGoal: "<i class='fas fa-plus'></i> יעד חדש",
             fcExpInc: "צפי הכנסות לחודש הבא", fcExpExp: "צפי הוצאות לחודש הבא", fcExpBal: "חיסכון צפוי", fcDetail: "ניתוח תחזית חכמה",
             recTitle: "הוראות קבע ותשלומים קבועים", recDesc: "המערכת תזין תנועות אלו אוטומטית בכל חודש", btnNewRec: "<i class='fas fa-plus'></i> הוראה חדשה",
-            setMgmtTitle: "<i class='fas fa-database'></i> ניהול נתונים", setExport: "<i class='fas fa-download'></i> ייצוא גיבוי (JSON)", setImport: "<i class='fas fa-upload'></i> שחזור מגיבוי", setReset: "<i class='fas fa-trash-alt'></i> איפוס מלא של המערכת", setCatTitle: "<i class='fas fa-tags'></i> ניהול קטגוריות", setCatPlaceholder: "שם הקטגוריה...", setBudgetTitle: "<i class='fas fa-bullseye'></i> הגדרת תקציב חודשי לכל קטגוריה", setBudgetSave: "<i class='fas fa-save'></i> שמור הגדרות תקציב",
+            setMgmtTitle: "<i class='fas fa-database'></i> ניהול נתונים", setExport: "<i class='fas fa-download'></i> ייצוא גיבוי (JSON)", setImport: "<i class='fas fa-upload'></i> שחזור מגיבוי", setDemo: "🎁 טען נתוני הדגמה", setReset: "<i class='fas fa-trash-alt'></i> איפוס מלא של המערכת", setCatTitle: "<i class='fas fa-tags'></i> ניהול קטגוריות", setCatPlaceholder: "שם הקטגוריה...", setBudgetTitle: "<i class='fas fa-bullseye'></i> הגדרת תקציב חודשי לכל קטגוריה", setBudgetSave: "<i class='fas fa-save'></i> שמור הגדרות תקציב",
             setStatsTitle: "<i class='fas fa-chart-pie'></i> סטטיסטיקות", statRecords: "רשומות במערכת:", statVersion: "גרסה:", statLastUpdate: "עדכון אחרון:",
             aboutHeadProj: "אודות הפרויקט",
             aboutText1: "אני בוגר הנדסת תעשייה וניהול שהתעייף מלג'נגל בין אפליקציות בנק שונות וגיליונות אקסל רק כדי להבין לאן הכסף שלי הולך בכל חודש. אחרי שניסיתי שלל אפליקציות לניהול תקציב שהיו יקרות מדי, בעלות חווית משתמש (UX) גרועה, או שלא תמכו בעברית כמו שצריך – החלטתי לבנות פתרון משלי.",
@@ -579,7 +567,6 @@
             modRecTitle: "הוספת הוראת קבע", modRecName: "שם הספק (לדוגמה: ארנונה)", modRecAmount: "סכום חודשי", modRecDay: "יום בחודש (1-31)", modRecCat: "קטגוריה", modBtnSave: "שמור", modBtnCancel: "ביטול", modGoalTitle: "יעד חיסכון חדש", modGoalName: "מה המטרה? (חופשה, רכב וכו')", modGoalAmount: "סכום היעד", modGoalBtn: "צור יעד"
         },
         en: {
-            loginSub: "Your Financial Operating System.", loginPlaceholder: "Access Code", loginBtn: "Login", loginCode: "Code: PRO-2026",
             navDash: "📊 Dashboard", navJournal: "📝 Journal", navMonthly: "📅 Monthly", navCat: "🔍 Categories", navGoals: "🎯 Goals", navForecast: "🔮 Forecast", navRecurring: "🔄 Recurring", navSettings: "⚙️ Settings", navAbout: "ℹ️ About",
             healthTitle: "Financial Health", analyzing: "Analyzing...", kpiInc: "Total Income", kpiExp: "Total Expenses", kpiBal: "Current Balance", budgetStatus: "Monthly Budget Status", trendTitle: "Income vs Expenses Trend",
             aiHeading: "🤖 Financial Strategy Agent", aiDesc1: "The AI will analyze your spending and tell you the truth about your financial management. <strong>It is instructed NOT to tell you what you want to hear</strong>, but to objectively and directly criticize unnecessary expenses and provide real solutions.", aiPlaceholder: "Enter Gemini API Key (AIza...)", aiBtn: "✨ Analyze My Financial Portfolio", aiLoading: "Objectively analyzing data, please wait...",
@@ -589,7 +576,7 @@
             goalsTitle: "Savings Goals", btnNewGoal: "<i class='fas fa-plus'></i> New Goal",
             fcExpInc: "Expected Income Next Month", fcExpExp: "Expected Expenses Next Month", fcExpBal: "Expected Savings", fcDetail: "Smart Forecast Analysis",
             recTitle: "Recurring Payments & Subscriptions", recDesc: "The system will add these transactions automatically every month", btnNewRec: "<i class='fas fa-plus'></i> New Subscription",
-            setMgmtTitle: "<i class='fas fa-database'></i> Data Management", setExport: "<i class='fas fa-download'></i> Export Backup (JSON)", setImport: "<i class='fas fa-upload'></i> Restore Backup", setReset: "<i class='fas fa-trash-alt'></i> Full System Reset", setCatTitle: "<i class='fas fa-tags'></i> Category Management", setCatPlaceholder: "Category Name...", setBudgetTitle: "<i class='fas fa-bullseye'></i> Monthly Budget per Category", setBudgetSave: "<i class='fas fa-save'></i> Save Budgets",
+            setMgmtTitle: "<i class='fas fa-database'></i> Data Management", setExport: "<i class='fas fa-download'></i> Export Backup (JSON)", setImport: "<i class='fas fa-upload'></i> Restore Backup", setDemo: "🎁 Load Demo Data", setReset: "<i class='fas fa-trash-alt'></i> Full System Reset", setCatTitle: "<i class='fas fa-tags'></i> Category Management", setCatPlaceholder: "Category Name...", setBudgetTitle: "<i class='fas fa-bullseye'></i> Monthly Budget per Category", setBudgetSave: "<i class='fas fa-save'></i> Save Budgets",
             setStatsTitle: "<i class='fas fa-chart-pie'></i> Statistics", statRecords: "System Records:", statVersion: "Version:", statLastUpdate: "Last Updated:",
             aboutHeadProj: "About The Project",
             aboutText1: "I am an Industrial Engineering and Management graduate who got tired of juggling between various bank apps and Excel sheets just to understand where my money goes every month. After trying numerous budgeting apps that were either too expensive, had terrible UX, or didn't properly support Hebrew – I decided to build my own solution.",
@@ -612,8 +599,6 @@
     };
 
     function init() {
-        if(localStorage.getItem('proLicenseV3')==='OK') document.getElementById('login-overlay').style.display='none';
-        
         // טעינת מפתח API שמור אם קיים
         const savedApiKey = localStorage.getItem('gemini_api_key');
         if(savedApiKey && document.getElementById('gemini-api-key')) {
@@ -1351,12 +1336,59 @@
         renderAll();
     }
 
-    function checkLogin() {
-        if(document.getElementById('licenseInput').value === 'PRO-2026') {
-            localStorage.setItem('proLicenseV3', 'OK');
-            document.getElementById('login-overlay').style.display = 'none';
-        } else {
-            alert(currentLang === 'he' ? 'קוד גישה שגוי' : 'Incorrect access code');
+    // --- DEMO DATA INJECTION ---
+    function loadDemoData() {
+        if(confirm(currentLang === 'he' ? 'פעולה זו תמחק את הנתונים הקיימים ותטען נתוני הדגמה. להמשיך?' : 'This will replace existing data with demo data. Continue?')) {
+            const now = new Date();
+            const currM = now.toISOString().slice(0,7);
+            const p1 = new Date(now.getFullYear(), now.getMonth()-1, 15).toISOString().slice(0,7);
+            const p2 = new Date(now.getFullYear(), now.getMonth()-2, 15).toISOString().slice(0,7);
+            const p3 = new Date(now.getFullYear(), now.getMonth()-3, 15).toISOString().slice(0,7);
+
+            db = [
+                {id: 1, date: `${currM}-02`, desc: currentLang==='he'?'משכורת קבועה':'Salary', amount: 12500, cat: 'משכורת', type: 'income'},
+                {id: 2, date: `${currM}-05`, desc: currentLang==='he'?'שופרסל שלי':'Supermarket', amount: 450, cat: 'מזון וסופר', type: 'expense'},
+                {id: 3, date: `${currM}-08`, desc: currentLang==='he'?'דלק פז':'Gas Station', amount: 280, cat: 'רכב ותחבורה', type: 'expense'},
+                {id: 4, date: `${currM}-10`, desc: currentLang==='he'?'מסעדת לנדוור':'Restaurant', amount: 120, cat: 'בילויים ומסעדות', type: 'expense'},
+                {id: 5, date: `${currM}-12`, desc: currentLang==='he'?'חברת חשמל':'Electricity Bill', amount: 350, cat: 'דיור וחשבונות', type: 'expense'},
+                {id: 6, date: `${currM}-15`, desc: currentLang==='he'?'הולמס פלייס - מנוי':'Gym', amount: 250, cat: 'כושר וספורט', type: 'expense'},
+                {id: 7, date: `${currM}-18`, desc: currentLang==='he'?'זארה בגדים':'Zara', amount: 300, cat: 'קניות וביגוד', type: 'expense'},
+                {id: 8, date: `${currM}-20`, desc: currentLang==='he'?'סופר פארם':'Pharmacy', amount: 150, cat: 'בריאות', type: 'expense'},
+                
+                {id: 9, date: `${p1}-02`, desc: currentLang==='he'?'משכורת':'Salary', amount: 12500, cat: 'משכורת', type: 'income'},
+                {id: 10, date: `${p1}-06`, desc: currentLang==='he'?'רמי לוי - קניות':'Supermarket', amount: 600, cat: 'מזון וסופר', type: 'expense'},
+                {id: 11, date: `${p1}-11`, desc: currentLang==='he'?'הוט - אינטרנט':'Internet', amount: 180, cat: 'דיור וחשבונות', type: 'expense'},
+                {id: 12, date: `${p1}-14`, desc: currentLang==='he'?'דומינוס פיצה':'Pizza', amount: 85, cat: 'בילויים ומסעדות', type: 'expense'},
+                
+                {id: 13, date: `${p2}-02`, desc: currentLang==='he'?'משכורת':'Salary', amount: 12000, cat: 'משכורת', type: 'income'},
+                {id: 14, date: `${p2}-09`, desc: currentLang==='he'?'מוסך טיפול 10000':'Car Repair', amount: 1200, cat: 'רכב ותחבורה', type: 'expense'},
+                {id: 15, date: `${p2}-12`, desc: currentLang==='he'?'מתנה ליום הולדת':'Gift', amount: 400, cat: 'מתנות', type: 'expense'},
+                
+                {id: 16, date: `${p3}-02`, desc: currentLang==='he'?'משכורת':'Salary', amount: 12000, cat: 'משכורת', type: 'income'},
+                {id: 17, date: `${p3}-22`, desc: currentLang==='he'?'KSP - שואב אבק':'Electronics', amount: 3500, cat: 'דיור וחשבונות', type: 'expense'},
+                {id: 18, date: `${p3}-25`, desc: currentLang==='he'?'טיסה לאירופה':'Flight', amount: 1500, cat: 'חופשות', type: 'expense'}
+            ];
+
+            budgets = {
+                'מזון וסופר': 1500,
+                'בילויים ומסעדות': 800,
+                'רכב ותחבורה': 1000,
+                'דיור וחשבונות': 2000,
+                'קניות וביגוד': 500
+            };
+
+            goals = [
+                { id: 1, name: currentLang==='he'?'חופשה בקיץ':'Summer Vacation', target: 5000, saved: 2000 },
+                { id: 2, name: currentLang==='he'?'קרן חירום':'Emergency Fund', target: 20000, saved: 10500 }
+            ];
+
+            recurring = [
+                { id: 1, name: currentLang==='he'?'ארנונה עירייה':'City Tax', amount: 450, day: 15, cat: 'דיור וחשבונות' },
+                { id: 2, name: currentLang==='he'?'הוט אינטרנט':'Internet', amount: 100, day: 1, cat: 'דיור וחשבונות' }
+            ];
+
+            saveData();
+            location.reload();
         }
     }
 
