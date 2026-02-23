@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <title>PRO-FINANCE DIAMOND V3.3 + AI</title>
+    <title>Pro-Finance Diamond V3.5</title>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -231,6 +231,9 @@
                     <div class="input-group"><label style="font-weight:700; font-size:0.85rem;" data-i18n="lblDate">תאריך</label><input type="date" id="in-date" class="input-control" required></div>
                     <div class="input-group"><label style="font-weight:700; font-size:0.85rem;" data-i18n="lblDesc">תיאור העסקה</label><input type="text" id="in-desc" class="input-control" oninput="autoCat(this.value)" data-i18n-placeholder="descPlaceholder" placeholder="לדוגמה: ירח דבש בפריז..." required></div>
                     <div class="input-group"><label style="font-weight:700; font-size:0.85rem;" data-i18n="lblAmount">סכום</label><input type="number" id="in-amount" class="input-control" step="0.01" required></div>
+                    
+                    <div class="input-group"><label style="font-weight:700; font-size:0.85rem;" data-i18n="lblPayments">תשלומים</label><input type="number" id="in-payments" class="input-control" value="1" min="1" required></div>
+                    
                     <div class="input-group"><label style="font-weight:700; font-size:0.85rem;" data-i18n="lblCat">קטגוריה</label><select id="in-cat" class="input-control"></select></div>
                     <button type="submit" id="btn-submit-tx" class="btn-primary" style="height:48px;" data-i18n="btnAdd">הוסף למערכת</button>
                 </form>
@@ -241,7 +244,7 @@
                     <h3 style="margin:0;" data-i18n="journalTitle">יומן תנועות מלא</h3>
                     <div style="display:flex; gap:10px;">
                         <input type="text" id="journal-search" class="input-control" style="width:180px;" data-i18n-placeholder="searchPlaceholder" placeholder="חיפוש..." onkeyup="renderJournal(this.value)">
-                        <button class="btn-primary" onclick="document.getElementById('file-import').click()" data-i18n="btnImportExcel"><i class="fas fa-file-import"></i> ייבוא</button>
+                        <button class="btn-primary" onclick="document.getElementById('file-import').click()" data-i18n="btnImportExcel"><i class="fas fa-file-import"></i> ייבוא אקסל</button>
                         <input type="file" id="file-import" style="display:none" onchange="importExcel(this)">
                     </div>
                 </div>
@@ -390,7 +393,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.3</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.5</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -493,6 +496,26 @@
         </div>
     </div>
 
+    <div id="import-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 600px; width:95%;">
+            <h3 style="margin-top:0;" data-i18n="importModTitle">מיפוי נתוני בנק</h3>
+            <p style="font-size:0.9rem; color:#6b7280;" data-i18n="importModDesc">בחר איזו עמודה מתאימה לכל נתון. (מוצגות 3 שורות ראשונות להדגמה)</p>
+            
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:15px; background:#f9fafb; padding:15px; border-radius:8px;">
+                <div><label style="font-size:0.8rem; font-weight:bold;" data-i18n="lblDate">תאריך</label><select id="map-date" class="input-control" style="padding:8px;"></select></div>
+                <div><label style="font-size:0.8rem; font-weight:bold;" data-i18n="lblDesc">תיאור העסקה</label><select id="map-desc" class="input-control" style="padding:8px;"></select></div>
+                <div><label style="font-size:0.8rem; font-weight:bold;" data-i18n="lblAmount">סכום</label><select id="map-amount" class="input-control" style="padding:8px;"></select></div>
+            </div>
+            
+            <div id="import-preview" style="font-size:0.75rem; overflow-x:auto; margin-bottom:20px; max-height:150px; direction: ltr;"></div>
+            
+            <div style="display:flex; gap:10px;">
+                <button class="btn-primary" style="flex:1;" onclick="executeSmartImport()" data-i18n="importModBtn">בצע ייבוא רשומות</button>
+                <button class="btn-primary" style="flex:1; background:#e5e7eb; color:#374151;" onclick="closeModal('import-modal')" data-i18n="modBtnCancel">ביטול</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     // --- STATE MANAGEMENT ---
     let db = JSON.parse(localStorage.getItem('finDataV3')) || [];
@@ -513,11 +536,12 @@
         {name: 'הכנסה נוספת', color: '#84cc16'}
     ];
     let budgets = JSON.parse(localStorage.getItem('finBudgetsV3')) || {};
+    let customKeywords = JSON.parse(localStorage.getItem('finCustomKeywordsV3')) || {}; 
+    
     let charts = {};
     let currentLang = 'he';
     let editingId = null;
 
-    // --- KEYWORDS FOR SMART AUTO-COMPLETE ---
     const categoryKeywords = {
         'ירח דבש 2026': ['ירח דבש', 'honeymoon', 'חתונה', 'טבעת', 'אירוסין'],
         'מזון וסופר': ['סופר', 'מכולת', 'שופרסל', 'רמי לוי', 'ויקטורי', 'מחסני השוק', 'יינות ביתן', 'am:pm', '7eleven', 'טיב טעם', 'קצב', 'מאפיה'],
@@ -534,13 +558,12 @@
         'הכנסה נוספת': ['ביט', 'bit', 'paybox', 'פייבוקס', 'העברה', 'מזומן', 'זיכוי']
     };
 
-    // --- FULL TRANSLATIONS DICTIONARY ---
     const translations = {
         he: {
             navDash: "📊 מבט על", navJournal: "📝 יומן", navMonthly: "📅 חודשי", navCat: "🔍 קטגוריות", navGoals: "🎯 יעדים", navForecast: "🔮 תחזית", navRecurring: "🔄 קבע", navSettings: "⚙️ הגדרות", navAbout: "ℹ️ אודות",
             healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", budgetStatus: "מעקב תקציב חודשי", trendTitle: "מגמת הכנסות מול הוצאות",
             aiHeading: "🤖 סוכן אסטרטגיה פיננסית", aiDesc1: "ה-AI ינתח את ההוצאות שלך ויגיד לך את האמת על הניהול הכספי שלך. <strong>הוא מונחה לא להגיד לך מה שאתה רוצה לשמוע</strong>, אלא לבקר בצורה אובייקטיבית וישירה את ההוצאות המיותרות ולתת פתרונות אמיתיים.", aiPlaceholder: "הכנס מפתח API (AIza...)", aiBtn: "✨ נתח את התיק הפיננסי שלי", aiLoading: "מנתח נתונים באובייקטיביות, נא להמתין...",
-            autoCatBadge: "✨ זוהה אוטומטית", addTxTitle: "<i class='fas fa-edit'></i> הוספת תנועה", lblDate: "תאריך", lblDesc: "תיאור העסקה", descPlaceholder: "לדוגמה: ירח דבש בפריז...", lblAmount: "סכום", lblCat: "קטגוריה", btnAdd: "הוסף למערכת", journalTitle: "יומן תנועות מלא", searchPlaceholder: "חיפוש...", btnImportExcel: "<i class='fas fa-file-import'></i> ייבוא", thDate: "תאריך", thDesc: "תיאור", thCat: "קטגוריה", thAmount: "סכום", thActions: "פעולות",
+            autoCatBadge: "✨ זוהה אוטומטית", addTxTitle: "<i class='fas fa-edit'></i> הוספת תנועה", lblDate: "תאריך", lblDesc: "תיאור העסקה", descPlaceholder: "לדוגמה: ירח דבש בפריז...", lblAmount: "סכום", lblPayments: "תשלומים", lblCat: "קטגוריה", btnAdd: "הוסף למערכת", journalTitle: "יומן תנועות מלא", searchPlaceholder: "חיפוש...", btnImportExcel: "<i class='fas fa-file-import'></i> ייבוא אקסל", thDate: "תאריך", thDesc: "תיאור", thCat: "קטגוריה", thAmount: "סכום", thActions: "פעולות",
             monthlyDetailTitle: "ניתוח חודשי מפורט", monthInc: "הכנסות", monthExp: "הוצאות", monthBal: "יתרה", monthAvg: "ממוצע יומי", chartDaily: "פילוח לפי ימים", chartCat: "פילוח קטגוריות",
             optAllTime: "כל הזמנים", opt3Months: "3 חודשים אחרונים", opt6Months: "6 חודשים אחרונים", opt12Months: "שנה אחרונה", catTotal: "סה\"כ הוצאות בתקופה", catAvg: "ממוצע חודשי", catDetails: "פירוט רשומות",
             goalsTitle: "יעדי חיסכון ומטרות", btnNewGoal: "<i class='fas fa-plus'></i> יעד חדש",
@@ -548,6 +571,7 @@
             recTitle: "הוראות קבע ותשלומים קבועים", recDesc: "המערכת תזין תנועות אלו אוטומטית בכל חודש", btnNewRec: "<i class='fas fa-plus'></i> הוראה חדשה",
             setMgmtTitle: "<i class='fas fa-database'></i> ניהול נתונים", setExport: "<i class='fas fa-download'></i> ייצוא גיבוי (JSON)", setImport: "<i class='fas fa-upload'></i> שחזור מגיבוי", setDemo: "🎁 טען נתוני הדגמה", setReset: "<i class='fas fa-trash-alt'></i> איפוס מלא של המערכת", setCatTitle: "<i class='fas fa-tags'></i> ניהול קטגוריות", setCatPlaceholder: "שם הקטגוריה...", setBudgetTitle: "<i class='fas fa-bullseye'></i> הגדרת תקציב חודשי לכל קטגוריה", setBudgetSave: "<i class='fas fa-save'></i> שמור הגדרות תקציב",
             setStatsTitle: "<i class='fas fa-chart-pie'></i> סטטיסטיקות", statRecords: "רשומות במערכת:", statVersion: "גרסה:", statLastUpdate: "עדכון אחרון:",
+            importModTitle: "מיפוי נתוני בנק", importModDesc: "בחר איזו עמודה מתאימה לכל נתון. (מוצגות 3 שורות ראשונות להדגמה)", importModBtn: "בצע ייבוא רשומות",
             aboutHeadProj: "אודות הפרויקט",
             aboutText1: "אני בוגר הנדסת תעשייה וניהול שהתעייף מלג'נגל בין אפליקציות בנק שונות וגיליונות אקסל רק כדי להבין לאן הכסף שלי הולך בכל חודש. אחרי שניסיתי שלל אפליקציות לניהול תקציב שהיו יקרות מדי, בעלות חווית משתמש (UX) גרועה, או שלא תמכו בעברית כמו שצריך – החלטתי לבנות פתרון משלי.",
             aboutText2: "הפרויקט הזה התחיל כמעקב הוצאות פשוט והתפתח למערכת ניהול פיננסי מלאה במהלך חודשים של שימוש יומיומי ואיטרציות (שיפורים מחזוריים). המערכת תוכננה במיוחד לשוק הישראלי עם ממשק בעברית, מטבע שקלי, ויבוא ישיר מהבנקים המקומיים.",
@@ -570,7 +594,7 @@
             navDash: "📊 Dashboard", navJournal: "📝 Journal", navMonthly: "📅 Monthly", navCat: "🔍 Categories", navGoals: "🎯 Goals", navForecast: "🔮 Forecast", navRecurring: "🔄 Recurring", navSettings: "⚙️ Settings", navAbout: "ℹ️ About",
             healthTitle: "Financial Health", analyzing: "Analyzing...", kpiInc: "Total Income", kpiExp: "Total Expenses", kpiBal: "Current Balance", budgetStatus: "Monthly Budget Status", trendTitle: "Income vs Expenses Trend",
             aiHeading: "🤖 Financial Strategy Agent", aiDesc1: "The AI will analyze your spending and tell you the truth about your financial management. <strong>It is instructed NOT to tell you what you want to hear</strong>, but to objectively and directly criticize unnecessary expenses and provide real solutions.", aiPlaceholder: "Enter Gemini API Key (AIza...)", aiBtn: "✨ Analyze My Financial Portfolio", aiLoading: "Objectively analyzing data, please wait...",
-            autoCatBadge: "✨ Auto-Detected", addTxTitle: "<i class='fas fa-edit'></i> Add Transaction", lblDate: "Date", lblDesc: "Description", descPlaceholder: "e.g., Honeymoon in Paris...", lblAmount: "Amount", lblCat: "Category", btnAdd: "Add to System", journalTitle: "Transaction Journal", searchPlaceholder: "Search...", btnImportExcel: "<i class='fas fa-file-import'></i> Import", thDate: "Date", thDesc: "Description", thCat: "Category", thAmount: "Amount", thActions: "Actions",
+            autoCatBadge: "✨ Auto-Detected", addTxTitle: "<i class='fas fa-edit'></i> Add Transaction", lblDate: "Date", lblDesc: "Description", descPlaceholder: "e.g., Honeymoon in Paris...", lblAmount: "Amount", lblPayments: "Installments", lblCat: "Category", btnAdd: "Add to System", journalTitle: "Transaction Journal", searchPlaceholder: "Search...", btnImportExcel: "<i class='fas fa-file-import'></i> Import Excel", thDate: "Date", thDesc: "Description", thCat: "Category", thAmount: "Amount", thActions: "Actions",
             monthlyDetailTitle: "Detailed Monthly Analysis", monthInc: "Income", monthExp: "Expenses", monthBal: "Balance", monthAvg: "Daily Average", chartDaily: "Daily Breakdown", chartCat: "Category Breakdown",
             optAllTime: "All Time", opt3Months: "Last 3 Months", opt6Months: "Last 6 Months", opt12Months: "Last Year", catTotal: "Total Spend in Period", catAvg: "Monthly Average", catDetails: "Record Details",
             goalsTitle: "Savings Goals", btnNewGoal: "<i class='fas fa-plus'></i> New Goal",
@@ -578,6 +602,7 @@
             recTitle: "Recurring Payments & Subscriptions", recDesc: "The system will add these transactions automatically every month", btnNewRec: "<i class='fas fa-plus'></i> New Subscription",
             setMgmtTitle: "<i class='fas fa-database'></i> Data Management", setExport: "<i class='fas fa-download'></i> Export Backup (JSON)", setImport: "<i class='fas fa-upload'></i> Restore Backup", setDemo: "🎁 Load Demo Data", setReset: "<i class='fas fa-trash-alt'></i> Full System Reset", setCatTitle: "<i class='fas fa-tags'></i> Category Management", setCatPlaceholder: "Category Name...", setBudgetTitle: "<i class='fas fa-bullseye'></i> Monthly Budget per Category", setBudgetSave: "<i class='fas fa-save'></i> Save Budgets",
             setStatsTitle: "<i class='fas fa-chart-pie'></i> Statistics", statRecords: "System Records:", statVersion: "Version:", statLastUpdate: "Last Updated:",
+            importModTitle: "Map Bank Data", importModDesc: "Select which column matches each data point. (First 3 rows shown)", importModBtn: "Execute Import",
             aboutHeadProj: "About The Project",
             aboutText1: "I am an Industrial Engineering and Management graduate who got tired of juggling between various bank apps and Excel sheets just to understand where my money goes every month. After trying numerous budgeting apps that were either too expensive, had terrible UX, or didn't properly support Hebrew – I decided to build my own solution.",
             aboutText2: "This project started as a simple expense tracker and evolved into a full financial management system over months of daily use and iterations. The system was designed specifically for the Israeli market with a Hebrew interface, Shekel currency, and direct imports from local banks.",
@@ -599,16 +624,13 @@
     };
 
     function init() {
-        // טעינת מפתח API שמור אם קיים
         const savedApiKey = localStorage.getItem('gemini_api_key');
         if(savedApiKey && document.getElementById('gemini-api-key')) {
             document.getElementById('gemini-api-key').value = savedApiKey;
         }
         
-        // Data Cleanup Engine
         cleanData();
 
-        // Ensure essential logic is part of the categories
         const essentialNames = ['ירח דבש', 'מזון וסופר', 'בילויים ומסעדות'];
         essentialNames.forEach(name => {
             if(!cats.some(c => c.name === name)) {
@@ -616,6 +638,17 @@
             }
         });
         
+        // --- מנגנון התראת גיבוי יומית ---
+        const lastBackup = localStorage.getItem('finLastBackupV3');
+        const ONE_DAY = 24 * 60 * 60 * 1000;
+        if (!lastBackup || (Date.now() - parseInt(lastBackup)) > ONE_DAY) {
+            setTimeout(() => {
+                if(confirm(currentLang === 'he' ? 'עברו 24 שעות מאז שגיבית את הנתונים שלך לאחרונה.\nמומלץ להוריד קובץ גיבוי עכשיו כדי למנוע אובדן מידע במידה ומטמון הדפדפן יימחק.\n\nהאם להוריד גיבוי כעת?' : 'It has been 24 hours since your last backup. Download now?')) {
+                    exportData();
+                }
+            }, 4000); 
+        }
+
         document.getElementById('in-date').valueAsDate = new Date();
         runRecurringEngine();
         renderAll();
@@ -868,7 +901,7 @@
 
         const prompt = currentLang === 'he' 
             ? `אתה סוכן אסטרטגיה פיננסית. נתח את הנתונים הבאים של המשתמש:
-            עסקאות אחרונות: ${JSON.stringify(db.slice(-100))}
+            עסקאות אחרונות: ${JSON.stringify(db.slice(-100).map(t => ({date:t.date, desc:t.desc, amount:t.amount, cat:t.cat})))}
             תקציבים שהוגדרו: ${JSON.stringify(budgets)}
             
             הוראות קריטיות:
@@ -880,7 +913,7 @@
             
             החזר את התשובה ב-HTML בלבד, מיושר לימין, ללא עטיפת Markdown כגון \`\`\`html.`
             : `You are a financial strategy agent. Analyze the following user data:
-            Recent transactions: ${JSON.stringify(db.slice(-100))}
+            Recent transactions: ${JSON.stringify(db.slice(-100).map(t => ({date:t.date, desc:t.desc, amount:t.amount, cat:t.cat})))}
             Defined budgets: ${JSON.stringify(budgets)}
             
             Critical Instructions:
@@ -915,7 +948,6 @@
                 const data = await resp.json();
                 let text = data.candidates[0].content.parts[0].text;
                 
-                // ניקוי עטיפות Markdown למקרה שהמודל החזיר אותן
                 document.getElementById('ai-full-response').innerHTML = text.replace(/```html|```/g, '');
                 
                 success = true; 
@@ -1131,35 +1163,63 @@
         });
     }
 
+    // --- הפונקציה הלומדת סיווגים מהמשתמש ---
+    function learnCategory(desc, cat) {
+        if(!desc || desc.length < 3) return; 
+        const cleanDesc = desc.trim().toLowerCase().split(' ')[0]; 
+        
+        if(!customKeywords[cat]) customKeywords[cat] = [];
+        if(!customKeywords[cat].includes(cleanDesc)) {
+            customKeywords[cat].push(cleanDesc);
+            localStorage.setItem('finCustomKeywordsV3', JSON.stringify(customKeywords));
+        }
+    }
+
     document.getElementById('form-add').onsubmit = e => {
         e.preventDefault();
-        const amount = parseFloat(document.getElementById('in-amount').value);
+        const totalAmount = parseFloat(document.getElementById('in-amount').value);
         const cat = document.getElementById('in-cat').value;
         const type = (cat === 'משכורת' || cat === 'הכנסה נוספת') ? 'income' : 'expense';
+        const payments = parseInt(document.getElementById('in-payments').value) || 1;
+        const descInput = document.getElementById('in-desc').value;
+        const baseDate = new Date(document.getElementById('in-date').value);
         
-        const tx = {
-            id: editingId || Date.now(),
-            date: document.getElementById('in-date').value,
-            desc: document.getElementById('in-desc').value,
-            amount: amount,
-            cat: cat,
-            type: type
-        };
+        // למידת קטגוריות
+        learnCategory(descInput, cat);
+
+        const amountPerPayment = totalAmount / payments;
 
         if(editingId) {
             const idx = db.findIndex(t => t.id === editingId);
-            db[idx] = tx;
+            db[idx] = { id: editingId, date: document.getElementById('in-date').value, desc: descInput, amount: totalAmount, cat: cat, type: type };
             editingId = null;
             document.getElementById('btn-submit-tx').innerHTML = currentLang === 'he' ? 'הוסף למערכת' : 'Add to System';
+            document.getElementById('in-payments').parentElement.style.display = 'block'; 
         } else {
-            db.push(tx);
+            // יצירת תשלומים
+            for(let i = 0; i < payments; i++) {
+                let pDate = new Date(baseDate);
+                pDate.setMonth(pDate.getMonth() + i); 
+                
+                let finalDesc = payments > 1 ? `${descInput} (תשלום ${i+1}/${payments})` : descInput;
+                
+                db.push({
+                    id: Date.now() + Math.random(),
+                    date: pDate.toISOString().slice(0,10),
+                    desc: finalDesc,
+                    amount: amountPerPayment,
+                    cat: cat,
+                    type: type
+                });
+            }
         }
 
         saveData();
         e.target.reset();
+        document.getElementById('in-payments').value = 1;
         document.getElementById('in-date').valueAsDate = new Date();
         renderAll();
-        showToast(currentLang === 'he' ? 'התנועה נשמרה בהצלחה' : 'Transaction saved successfully');
+        showToast(currentLang === 'he' ? 'הפעולה נשמרה בהצלחה' : 'Transaction saved');
     };
 
     function deleteTx(id) {
@@ -1176,6 +1236,9 @@
         document.getElementById('in-desc').value = tx.desc;
         document.getElementById('in-amount').value = tx.amount;
         document.getElementById('in-cat').value = tx.cat;
+        
+        document.getElementById('in-payments').parentElement.style.display = 'none'; // הסתרת תשלומים בעריכה
+
         editingId = id;
         document.getElementById('btn-submit-tx').innerHTML = currentLang === 'he' ? 'עדכן תנועה' : 'Update Transaction';
         document.getElementById('nav-journal').click();
@@ -1365,7 +1428,7 @@
                 {id: 15, date: `${p2}-12`, desc: currentLang==='he'?'מתנה ליום הולדת':'Gift', amount: 400, cat: 'מתנות', type: 'expense'},
                 
                 {id: 16, date: `${p3}-02`, desc: currentLang==='he'?'משכורת':'Salary', amount: 12000, cat: 'משכורת', type: 'income'},
-                {id: 17, date: `${p3}-22`, desc: currentLang==='he'?'KSP - שואב אבק':'Electronics', amount: 3500, cat: 'דיור וחשבונות', type: 'expense'},
+                {id: 17, date: `${p3}-22`, desc: currentLang==='he'?'KSP - שואב אבק (תשלום 1/3)':'Electronics', amount: 1166, cat: 'דיור וחשבונות', type: 'expense'},
                 {id: 18, date: `${p3}-25`, desc: currentLang==='he'?'טיסה לאירופה':'Flight', amount: 1500, cat: 'חופשות', type: 'expense'}
             ];
 
@@ -1399,17 +1462,13 @@
         let count = 0;
         
         recurring.forEach(s => {
-            // התיאור המדויק שהמערכת מצפה לראות
             const expectedDesc = `🔄 ${s.name}`;
-            
-            // בדיקה אמיתית: האם כבר יש ב-DB תנועה בחודש הנוכחי עם התיאור הזה?
             const alreadyExists = db.some(t => 
                 t.date.startsWith(currentMonth) && 
                 t.desc === expectedDesc &&
                 t.amount === parseFloat(s.amount)
             );
             
-            // אם לא קיים, והגיע התאריך - מזין את התנועה
             if(!alreadyExists && today.getDate() >= s.day) {
                 db.push({
                     id: Date.now() + Math.random(),
@@ -1426,7 +1485,6 @@
         if(count > 0) { 
             saveData(); 
             showToast(currentLang === 'he' ? `${count} הוראות קבע הוזנו אוטומטית` : `${count} recurring payments added automatically`); 
-            // מרפרש את הממשק
             renderDashboard();
             renderJournal();
         }
@@ -1469,34 +1527,28 @@
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets}, null, 2);
         const fileName = `pro_finance_diamond_v3_backup_${new Date().toISOString().slice(0,10)}.json`;
 
-        if ('showSaveFilePicker' in window) {
-            try {
+        try {
+            if ('showSaveFilePicker' in window) {
                 const handle = await window.showSaveFilePicker({
                     suggestedName: fileName,
-                    types: [{
-                        description: 'JSON Backup File',
-                        accept: {'application/json': ['.json']},
-                    }],
+                    types: [{ description: 'JSON Backup File', accept: {'application/json': ['.json']} }],
                 });
                 const writable = await handle.createWritable();
                 await writable.write(dataStr);
                 await writable.close();
-                showToast(currentLang === 'he' ? 'הגיבוי נשמר בהצלחה!' : 'Backup saved successfully!');
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error(err);
-                    showToast(currentLang === 'he' ? 'שגיאה בשמירת הקובץ' : 'Error saving file');
-                }
+            } else {
+                const blob = new Blob([dataStr], {type:'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                a.click();
+                URL.revokeObjectURL(url);
             }
-        } else {
-            const blob = new Blob([dataStr], {type:'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast(currentLang === 'he' ? 'הגיבוי הורד למחשב' : 'Backup downloaded');
+            showToast(currentLang === 'he' ? 'הגיבוי נשמר בהצלחה!' : 'Backup saved successfully!');
+            localStorage.setItem('finLastBackupV3', Date.now().toString()); // איפוס תאריך התראת גיבוי
+        } catch (err) {
+            if (err.name !== 'AbortError') showToast(currentLang === 'he' ? 'שגיאה בשמירת הקובץ' : 'Error saving file');
         }
     }
 
@@ -1524,68 +1576,156 @@
         }
     }
 
+    // --- ייבוא אקסל חכם (כולל סינון שורות מיותרות) ---
+    let tempImportData = [];
+    let tempImportHeaders = [];
+
     function importExcel(input) {
+        const file = input.files[0];
+        if(!file) return;
         const r = new FileReader();
         r.onload = e => {
             const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            rows.forEach(row => {
-                const vals = Object.values(row);
-                const amount = vals.find(v => typeof v === 'number');
-                const desc = vals.find(v => typeof v === 'string' && v.length > 2) || (currentLang === 'he' ? 'ייבוא' : 'Import');
-                if(amount) {
-                    db.push({
-                        id: Date.now() + Math.random(),
-                        date: new Date().toISOString().slice(0,10),
-                        desc: desc,
-                        amount: Math.abs(amount),
-                        cat: 'אחר',
-                        type: amount > 0 ? 'income' : 'expense'
-                    });
-                }
+            const rawJson = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1}); 
+            
+            if(rawJson.length < 2) return alert('הקובץ ריק או לא בפורמט נתמך');
+            
+            tempImportHeaders = rawJson[0]; 
+            tempImportData = rawJson.slice(1); 
+            
+            let optionsHtml = '<option value="">-- דילוג (לא חובה) --</option>';
+            tempImportHeaders.forEach((h, idx) => {
+                optionsHtml += `<option value="${idx}">[עמודה ${idx+1}] ${h || ''}</option>`;
             });
-            saveData();
-            renderAll();
-            showToast(currentLang === 'he' ? 'ייבוא הושלם' : 'Import complete');
+            
+            document.getElementById('map-date').innerHTML = optionsHtml;
+            document.getElementById('map-desc').innerHTML = optionsHtml;
+            
+            let reqOptionsHtml = '<option value="">-- חובה לבחור סכום --</option>';
+            tempImportHeaders.forEach((h, idx) => { reqOptionsHtml += `<option value="${idx}">[עמודה ${idx+1}] ${h || ''}</option>`; });
+            document.getElementById('map-amount').innerHTML = reqOptionsHtml;
+            
+            let previewHtml = '<table style="width:100%; border-collapse:collapse;"><tr>';
+            tempImportHeaders.forEach(h => previewHtml += `<th style="border:1px solid #ccc; padding:5px; background:#eee;">${h || ''}</th>`);
+            previewHtml += '</tr>';
+            
+            tempImportData.slice(0, 4).forEach(row => {
+                previewHtml += '<tr>';
+                for(let i=0; i<tempImportHeaders.length; i++) {
+                    previewHtml += `<td style="border:1px solid #ccc; padding:5px; white-space:nowrap;">${row[i] || ''}</td>`;
+                }
+                previewHtml += '</tr>';
+            });
+            previewHtml += '</table>';
+            
+            document.getElementById('import-preview').innerHTML = previewHtml;
+            openModal('import-modal');
+            input.value = ''; 
         };
-        r.readAsArrayBuffer(input.files[0]);
+        r.readAsArrayBuffer(file);
     }
 
-    // --- AUTO-CATEGORIZATION LOGIC ---
+    function executeSmartImport() {
+        const dateIdx = document.getElementById('map-date').value;
+        const descIdx = document.getElementById('map-desc').value;
+        const amountIdx = document.getElementById('map-amount').value;
+        
+        if(amountIdx === '') return alert('חובה לבחור את עמודת הסכום');
+        if(descIdx === '') return alert('חובה לבחור את עמודת התיאור');
+        
+        let count = 0;
+        const nowStr = new Date().toISOString().slice(0,10);
+
+        tempImportData.forEach(row => {
+            let amountRaw = row[amountIdx];
+            let descRaw = row[descIdx];
+            let dateRaw = dateIdx !== '' ? row[dateIdx] : nowStr;
+            
+            if(amountRaw == null || descRaw == null) return; 
+            
+            const cleanDescStr = String(descRaw).trim();
+
+            // מנגנון סינון שורות זבל וסיכומי ביניים של חברות אשראי
+            const ignoreKeywords = ['סך חיוב', 'סה"כ', 'יתרה', 'סכום כולל', 'פירוט חיובי', 'עסקה חו"ל', 'סך עסקה'];
+            if (ignoreKeywords.some(keyword => cleanDescStr.includes(keyword))) {
+                return; // דילוג על השורה
+            }
+            
+            let amount = typeof amountRaw === 'number' ? amountRaw : parseFloat(String(amountRaw).replace(/[^\d.-]/g, ''));
+            if(isNaN(amount) || amount === 0) return; 
+            
+            let parsedDate;
+            if(typeof dateRaw === 'number') {
+                parsedDate = new Date(Math.round((dateRaw - 25569) * 86400 * 1000));
+            } else {
+                const parts = String(dateRaw).split(/[-/]/);
+                if(parts.length === 3) {
+                     if(parts[2].length === 2 || parts[2].length === 4) {
+                         let y = parts[2].length === 2 ? '20'+parts[2] : parts[2];
+                         parsedDate = new Date(`${y}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`);
+                     }
+                } else {
+                     parsedDate = new Date(dateRaw);
+                }
+            }
+            if(isNaN(parsedDate)) parsedDate = new Date();
+
+            db.push({
+                id: Date.now() + Math.random(),
+                date: parsedDate.toISOString().slice(0,10),
+                desc: cleanDescStr,
+                amount: Math.abs(amount),
+                cat: 'אחר',
+                type: amount > 0 ? 'expense' : 'income' 
+            });
+            count++;
+        });
+        
+        // סיווג אוטומטי של הרשומות שיובאו
+        db.filter(t => t.cat === 'אחר').forEach(t => {
+            let testVal = t.desc.toLowerCase();
+            for (const [cName, kws] of Object.entries(customKeywords)) {
+                if (kws.some(k => testVal.includes(k))) t.cat = cName;
+            }
+            if(t.cat === 'אחר') {
+                for (const [cName, kws] of Object.entries(categoryKeywords)) {
+                    if (kws.some(k => testVal.includes(k.toLowerCase()))) t.cat = cName;
+                }
+            }
+        });
+
+        saveData();
+        renderAll();
+        closeModal('import-modal');
+        showToast(currentLang === 'he' ? `ייבוא הושלם! ${count} רשומות חדשות נוספו בהצלחה.` : `Import complete! ${count} records added.`);
+    }
+
+    // --- AUTO-CATEGORIZATION LOGIC (Real-time input) ---
     function autoCat(v) {
         if(!v) return;
-        const val = v.trim();
+        const val = v.trim().toLowerCase();
         const catSelect = document.getElementById('in-cat');
-        const lowerV = val.toLowerCase();
         const autoBadge = document.getElementById('autoCatBadge');
-        
         let detected = false;
 
-        // 1. SMART MAPPING FROM KEYWORDS
-        for (const [catName, keywords] of Object.entries(categoryKeywords)) {
-            // Find the active category object in the 'cats' array
-            const activeCat = cats.find(c => c.name === catName);
-            if (activeCat) {
-                if (keywords.some(k => lowerV.includes(k.toLowerCase()))) {
-                    catSelect.value = activeCat.name;
-                    detected = true;
-                }
+        // בדיקה במילון הנלמד קודם
+        for (const [catName, keywords] of Object.entries(customKeywords)) {
+            if (keywords.some(k => val.includes(k))) {
+                if(cats.some(c => c.name === catName)) { catSelect.value = catName; detected = true; break; }
             }
         }
 
-        // 2. DIRECT NAME MATCH (Fallback)
+        // בדיקה במילון הקבוע אם לא נמצא בלומד
         if (!detected) {
-             const sortedCats = [...cats].sort((a, b) => b.name.length - a.name.length);
-             for (let cat of sortedCats) {
-                 if (val.includes(cat.name)) {
-                     catSelect.value = cat.name;
-                     detected = true;
-                     break;
-                 }
-             }
+            for (const [catName, keywords] of Object.entries(categoryKeywords)) {
+                if (cats.some(c => c.name === catName) && keywords.some(k => val.includes(k.toLowerCase()))) {
+                    catSelect.value = catName;
+                    detected = true;
+                    break;
+                }
+            }
         }
         
-        // Show Badge
         if (detected) {
             autoBadge.style.display = 'block';
             setTimeout(() => autoBadge.style.display = 'none', 1500);
