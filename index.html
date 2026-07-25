@@ -13,7 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
-    <!-- Firebase Compat SDKs -->
+    <!-- Firebase Compat SDKs (כולל Auth) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -245,7 +245,7 @@
             
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:20px; margin-bottom:20px;">
                 <div class="card" style="margin:0;">
-                    <h3 style="margin-bottom:20px;" data-i18n="trendTitle">מגמת הכנסות מול הוצאות</h3>
+                    <h3 style="margin-bottom:20px;" data-i18n="trendTitle">מגמת הככנסות מול הוצאות</h3>
                     <div class="chart-container"><canvas id="chartTrend"></canvas></div>
                 </div>
                 <div class="card" style="margin:0;">
@@ -321,8 +321,8 @@
                             <option value="500" data-i18n="opt500">500 אחרונות</option>
                             <option value="all" data-i18n="optAll">הצג הכל</option>
                         </select>
-                        <button class="btn-primary" onclick="document.getElementById('file-import').click()" data-i18n="btnImportExcel"><i class="fas fa-file-import"></i> ייבוא</button>
-                        <input type="file" id="file-import" style="display:none" onchange="importExcel(this)">
+                        <button class="btn-primary" onclick="document.getElementById('file-import').click()" data-i18n="btnImportExcel"><i class="fas fa-file-import"></i> ייבוא חכם</button>
+                        <input type="file" id="file-import" accept=".xlsx,.xls,.csv" style="display:none" onchange="importExcel(this)">
                     </div>
                 </div>
                 <div style="overflow-x:auto;">
@@ -540,7 +540,7 @@
                 <h3 data-i18n="aboutHeadFeat">✨ פיצ'רים מרכזיים</h3>
                 <div class="feature-grid">
                     <div class="feature-card"><div class="feature-icon">📊</div><div class="feature-content"><h4 data-i18n="feat1Title">לוח בקרה (Dashboard)</h4><p data-i18n="feat1Desc">תמונת מצב מיידית של המצב הפיננסי. סך הכנסות והוצאות שנתי, יתרה נוכחית וסטטוס תקציב.</p></div></div>
-                    <div class="feature-card"><div class="feature-icon">🤖</div><div class="feature-content"><h4 data-i18n="feat9Title">AI Advisor</h4><p data-i18n="feat9Desc">ניתוח אובייקטיבי של ההוצאות שלך וקבלת ייעוץ פיננסי אישי המבוסס על בינה מלאכותית.</p></div></div>
+                    <div class="feature-card"><div class="feature-icon">🤖</div><div class="feature-content"><h4 data-i18n="feat9Title">AI Advisor</h4><p data-i18n="feat9Desc">ניתוח אובייקטיבי של ההוצאות שלך וקבלת ייעוץ פיננסי אישי המבוסס על בינה מלאכולית.</p></div></div>
                     <div class="feature-card"><div class="feature-icon">💳</div><div class="feature-content"><h4 data-i18n="feat10Title">ניהול תקציב חודשי</h4><p data-i18n="feat10Desc">הגדרת תקציב אישי לכל קטגוריית הוצאה ומעקב בזמן אמת למניעת חריגות.</p></div></div>
                     <div class="feature-card"><div class="feature-icon">🎯</div><div class="feature-content"><h4 data-i18n="feat2Title">יעדי חיסכון</h4><p data-i18n="feat2Desc">הגדר מטרות פיננסיות. המערכת עוקבת אחר ההתקדמות ומחשבת צפי השלמה אוטומטי.</p></div></div>
                     <div class="feature-card"><div class="feature-icon">📈</div><div class="feature-content"><h4 data-i18n="feat3Title">ניתוח חודשי</h4><p data-i18n="feat3Desc">צלול לנתוני חודש ספציפי עם גרפים של הוצאות יומיות ופילוח לפי קטגוריות.</p></div></div>
@@ -627,6 +627,42 @@
         </div>
     </div>
 
+    <!-- ===== SMART IMPORT PREVIEW MODAL ===== -->
+    <div id="import-modal" class="modal-overlay" style="z-index:11000;">
+        <div class="modal-box" style="max-width:1000px; width:96%; max-height:92vh; display:flex; flex-direction:column; padding:22px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <h3 style="margin:0;"><i class="fas fa-file-import" style="color:var(--primary)"></i> אישור ייבוא רשומות אשראי</h3>
+                <button onclick="closeModal('import-modal')" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:#999;">&times;</button>
+            </div>
+            <p id="import-summary" style="font-size:0.9rem; color:#555; margin:4px 0 12px;"></p>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap;">
+                <button class="btn-primary" style="padding:6px 14px; font-size:0.82rem; background:#f3f4f6; color:#333;" onclick="importToggleAll(true)"><i class="fas fa-check-double"></i> סמן הכל</button>
+                <button class="btn-primary" style="padding:6px 14px; font-size:0.82rem; background:#f3f4f6; color:#333;" onclick="importToggleAll(false)"><i class="fas fa-square"></i> נקה הכל</button>
+                <span style="font-size:0.78rem; color:#f59e0b;"><i class="fas fa-triangle-exclamation"></i> רשומות כפולות (שכבר קיימות) לא מסומנות אוטומטית</span>
+            </div>
+            <div style="overflow:auto; flex:1; border:1px solid #eee; border-radius:10px;">
+                <table id="import-tbl" style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                    <thead style="position:sticky; top:0; background:var(--primary); color:#fff; z-index:1;">
+                        <tr>
+                            <th style="padding:8px 6px;">✔</th>
+                            <th style="padding:8px 6px;">תאריך</th>
+                            <th style="padding:8px 6px; text-align:right;">בית עסק</th>
+                            <th style="padding:8px 6px;">סכום</th>
+                            <th style="padding:8px 6px;">סוג</th>
+                            <th style="padding:8px 6px;">כרטיס</th>
+                            <th style="padding:8px 6px; min-width:170px;">קטגוריה</th>
+                        </tr>
+                    </thead>
+                    <tbody id="import-tbody"></tbody>
+                </table>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:16px;">
+                <button class="btn-primary" style="flex:2;" onclick="confirmImport()"><i class="fas fa-circle-check"></i> אשר והוסף רשומות מסומנות</button>
+                <button class="btn-primary" style="flex:1; background:#f3f4f6; color:#333;" onclick="closeModal('import-modal')">ביטול</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
@@ -666,7 +702,9 @@
         {name: 'קניות וביגוד', color: '#f97316'}, 
         {name: 'בריאות', color: '#d946ef'}, 
         {name: 'משכורת', color: '#22c55e'}, 
-        {name: 'הכנסה נוספת', color: '#84cc16'}
+        {name: 'הכנסה נוספת', color: '#84cc16'},
+        {name: 'מוצרי חשמל', color: '#0ea5e9'},
+        {name: 'אחר', color: '#94a3b8'}
     ];
     let budgets = {};
     let dismissedAlerts = [];
@@ -723,10 +761,9 @@
         }
     }
 
-    // --- FIREBASE SYNC FUNCTIONS ---
-    // שמירת נתונים ישירות לשורש המסד
+    // --- FIREBASE SYNC FUNCTIONS (ROOT LINKED) ---
     function saveData() {
-        if (!currentUser) return;
+        if(!currentUser) return;
         rtdb.ref().set({
             db: db,
             recurring: recurring,
@@ -742,9 +779,8 @@
         });
     }
 
-    // טעינת נתונים בזמן אמת משורש המסד
     function initLiveSync() {
-        if (!currentUser) return;
+        if(!currentUser) return;
         rtdb.ref().on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -754,6 +790,8 @@
                 cats = data.cats || cats;
                 budgets = data.budgets || {};
                 dismissedAlerts = data.dismissedAlerts || [];
+            } else {
+                db = []; recurring = []; goals = []; budgets = {}; dismissedAlerts = [];
             }
             cleanDataSilently();
             runRecurringEngine();
@@ -819,7 +857,7 @@
             recTitle: "הוראות קבע ותשלומים קבועים", recDesc: "המערכת תזין תנועות אלו אוטומטית בכל חודש", btnNewRec: "<i class='fas fa-plus'></i> הוראה חדשה",
             setMgmtTitle: "<i class='fas fa-database'></i> ניהול נתונים", setExport: "<i class='fas fa-download'></i> ייצוא גיבוי (JSON)", setImport: "<i class='fas fa-upload'></i> שחזור מגיבוי", setDemo: "🎁 טען נתוני הדגמה", setPrint: "<i class='fas fa-file-pdf'></i> ייצא דוח PDF", setReset: "<i class='fas fa-trash-alt'></i> איפוס מלא של המערכת", setCatTitle: "<i class='fas fa-tags'></i> ניהול קטגוריות", setCatPlaceholder: "שם הקטגוריה...", setApiTitle: "<i class='fas fa-robot'></i> הגדרות AI Advisor", setBudgetTitle: "<i class='fas fa-bullseye'></i> הגדרת תקציב חודשי לכל קטגוריה", setBudgetSave: "<i class='fas fa-save'></i> שמור הגדרות תקציב",
             setStatsTitle: "<i class='fas fa-chart-pie'></i> סטטיסטיקות", statRecords: "רשומות במערכת:", statVersion: "גרסה:", statLastUpdate: "עדכון אחרון:",
-            aboutHeadProj: "אודות הפרויקט", aboutText1: "אני בוגר הנדסת תעשייה וניהול שהתעייף מלג'נגל בין אפליקציות בנק שונות וגיליונות אקסל רק כדי להבין לאן הכסף שלי הולך בכל חודש. אחרי שניסיתי שלל אפליקציות לניהול תקציב שהיו יקרות מדי, בעלות חווית משתמש (UX) גרועה, או שלא תמכו בעברית כמו שצריך – החלטתי לבנות פתרון משלי.", aboutText2: "הפרויקט הזה התחיל כמעקב הוצאות פשוט והתפתח למערכת ניהול פיננסי מלאה במהלך חודשים של שימוש יומיומי ואיטרציות (שיפורים מחזוריים). המערכת תוכננה במיוחד לשוק הישראלי עם ממשק בעברית, מטבע שקלי, ויבוא ישיר מהבנקים המקומיים.", aboutText3: "הבעיה המרכזית שרציתי לפתור הייתה פשוטה: הייתי צריך לדעת אם אני עומד לחרוג מהתקציב לפני שזה קורה, ולא אחרי שאני עובר על פירוט האשראי בסוף החודש. כמו כן, רציתי משהו שמכבד את הפרטיות שלי ושומר את כל הנתונים באופן מקומי על המכשיר שלי.", aboutHeadFeat: "✨ פיצ'רים מרכזיים", feat1Title: "לוח בקרה (Dashboard)", feat1Desc: "תמונת מצב מיידית של המצב הפיננסי. סך הכנסות והוצאות שנתי, יתרה נוכחית וסטטוס תקציב.", feat9Title: "AI Advisor", feat9Desc: "ניתוח אובייקטיבי של ההוצאות שלך וקבלת ייעוץ פיננסי אישי המבוסס על בינה מלאכותית.", feat10Title: "ניהול תקציב חודשי", feat10Desc: "הגדרת תקציב אישי לכל קטגוריית הוצאה ומעקב בזמן אמת למניעת חריגות.", feat2Title: "יעדי חיסכון", feat2Desc: "הגדר מטרות פיננסיות. המערכת עוקבת אחר ההתקדמות ומחשבת צפי השלמה אוטומטי.", feat3Title: "ניתוח חודשי", feat3Desc: "צלול לנתוני חודש ספציפי עם גרפים של הוצאות יומיות ופילוח לפי קטגוריות.", feat4Title: "ניתוח קטגוריה", feat4Desc: "הבן איפה הכסף שלך הולך עם מגמות של קטגוריות לאורך זמן ותמיכה בתגיות חופשיות.", feat5Title: "תחזית וסימולטור", feat5Desc: "צפה בתחזית מבוססת ממוצע וסמלץ מצבי צבירת הון עם ריבית דריבית.", feat6Title: "יומן תנועות", feat6Desc: "הוסף, ערוך, שפל ומחק תנועות בקלות. כולל ייבוא ישיר מקבצי בנק.", aboutHeadTech: "🛡️ מימוש טכני", aboutTechDesc: "האפליקציה בנויה עם טכנולוגיות צד-לקוח לביצועים מהירים וללא תלות בשרת (Local First), מה שמבטיח חוויית משתמש חלקה ופרטיות מקסימלית של המידע.", aboutHeadContact: "יצירת קשר", aboutAuthor: "שובל נאור - בוגר הנדסת תעשייה וניהול", aboutFooterLove: "נבנה באהבה ❤️", aboutFooterCopy: "© 2026 PRO-FINANCE. כל הזכויות שמורות.",
+            aboutHeadProj: "אודות הפרויקט", aboutText1: "אני בוגר הנדסת תעשייה וניהול שהתעייף מלג'נגל בין אפליקציות בנק שונות וגיליונות אקסל רק כדי להבין לאן הכסף שלי הולך בכל חודש. אחרי שניסיתי שלל אפליקציות לניהול תקציב שהיו יקרות מדי, בעלות חווית משתמש (UX) גרועה, או שלא תמכו בעברית כמו שצריך – החלטתי לבנות פתרון משלי.", aboutText2: "הפרויקט הזה התחיל כמעקב הוצאות פשוט והתפתח למערכת ניהול פיננסי מלאה במהלך חודשים של שימוש יומיומי ואיטרציות (שיפורים מחזוריים). המערכת תוכננה במיוחד לשוק הישראלי עם ממשק בעברית, מטבע שקלי, ויבוא ישיר מהבנקים המקומיים.", aboutText3: "הבעיה המרכזית שרציתי לפתור הייתה פשוטה: הייתי צריך לדעת אם אני עומד לחרוג מהתקציב לפני שזה קורה, ולא אחרי שאני עובר על פירוט האשראי בסוף החודש. כמו כן, רציתי משהו שמכבד את הפרטיות שלי ושומר את כל הנתונים באופן מקומי על המכשיר שלי.", aboutHeadFeat: "✨ פיצ'רים מרכזיים", feat1Title: "לוח בקרה (Dashboard)", feat1Desc: "תמונת מצב מיידית של המצב הפיננסי. סך הכנסות והוצאות שנתי, יתרה נוכחית וסטטוס תקציב.", feat9Title: "AI Advisor", feat9Desc: "ניתוח אובייקטיבי של ההוצאות שלך וקבלת ייעוץ פיננסי אישי המבוסס על בינה מלאכולית.", feat10Title: "ניהול תקציב חודשי", feat10Desc: "הגדרת תקציב אישי לכל קטגוריית הוצאה ומעקב בזמן אמת למניעת חריגות.", feat2Title: "יעדי חיסכון", feat2Desc: "הגדר מטרות פיננסיות. המערכת עוקבת אחר ההתקדמות ומחשבת צפי השלמה אוטומטי.", feat3Title: "ניתוח חודשי", feat3Desc: "צלול לנתוני חודש ספציפי עם גרפים של הוצאות יומיות ופילוח לפי קטגוריות.", feat4Title: "ניתוח קטגוריה", feat4Desc: "הבן איפה הכסף שלך הולך עם מגמות של קטגוריות לאורך זמן ותמיכה בתגיות חופשיות.", feat5Title: "תחזית וסימולטור", feat5Desc: "צפה בתחזית מבוססת ממוצע וסמלץ מצבי צבירת הון עם ריבית דריבית.", feat6Title: "יומן תנועות", feat6Desc: "הוסף, ערוך, שפל ומחק תנועות בקלות. כולל ייבוא ישיר מקבצי בנק.", aboutHeadTech: "🛡️ מימוש טכני", aboutTechDesc: "האפליקציה בנויה עם טכנולוגיות צד-לקוח לביצועים מהירים וללא תלות בשרת (Local First), מה שמבטיח חוויית משתמש חלקה ופרטיות מקסימלית של המידע.", aboutHeadContact: "יצירת קשר", aboutAuthor: "שובל נאור - בוגר הנדסת תעשייה וניהול", aboutFooterLove: "נבנה באהבה ❤️", aboutFooterCopy: "© 2026 PRO-FINANCE. כל הזכויות שמורות.",
             modRecTitle: "הוספת הוראת קבע", modRecName: "שם הספק (לדוגמה: ארנונה)", modRecAmount: "סכום חודשי", modRecDay: "יום בחודש (1-31)", modRecCat: "קטגוריה", modBtnSave: "שמור", modBtnCancel: "ביטול", modGoalTitle: "יעד חיסכון חדש", modGoalName: "מה המטרה? (חופשה, רכב וכו')", modGoalAmount: "סכום היעד", modGoalBtn: "צור יעד"
         },
         en: {
@@ -2301,31 +2339,186 @@
         }
     }
 
+    // מיפוי קטגוריות חברת האשראי (Max/Isracard) לקטגוריות של המערכת
+    const bankCatMap = {
+        'מסעדות, קפה וברים': 'בילויים ומסעדות',
+        'מסעדות ובתי קפה': 'בילויים ומסעדות',
+        'פנאי, בידור וספורט': 'כושר וספורט',
+        'פנאי ובידור': 'בילויים ומסעדות',
+        'רפואה ובתי מרקחת': 'בריאות',
+        'בריאות ותרופות': 'בריאות',
+        'סופרמרקט ומזון': 'מזון וסופר',
+        'מזון וסופרמרקט': 'מזון וסופר',
+        'סופרמרקט': 'מזון וסופר',
+        'ביגוד והנעלה': 'קניות וביגוד',
+        'אופנה': 'קניות וביגוד',
+        'רכב ותחבורה': 'רכב ותחבורה',
+        'דלק': 'רכב ותחבורה',
+        'תחבורה': 'רכב ותחבורה',
+        'חשמל ואלקטרוניקה': 'מוצרי חשמל',
+        'תקשורת': 'דיור וחשבונות',
+        'חשבונות ותשלומים': 'דיור וחשבונות',
+        'דיור': 'דיור וחשבונות',
+        'נסיעות ותיירות': 'חופשות',
+        'תיירות ונופש': 'חופשות',
+        'בעלי חיים': 'חיות מחמד',
+        'מתנות': 'מתנות'
+    };
+
+    let pendingImport = [];
+
+    // מנוע זיהוי קטגוריה: קודם מיפוי מקטגוריית הבנק, אחרת מילות מפתח, אחרת "אחר"
+    function detectCatSmart(bankCat, merchant) {
+        if (bankCat && bankCatMap[bankCat.trim()] && cats.find(c => c.name === bankCatMap[bankCat.trim()])) {
+            return bankCatMap[bankCat.trim()];
+        }
+        const txt = ((merchant || '') + ' ' + (bankCat || '')).toLowerCase();
+        for (const [catName, keywords] of Object.entries(categoryKeywords)) {
+            if (!cats.find(c => c.name === catName)) continue;
+            if (keywords.some(k => txt.includes(k.toLowerCase()))) return catName;
+        }
+        if (bankCat && cats.find(c => c.name === bankCat.trim())) return bankCat.trim();
+        return cats.find(c => c.name === 'אחר') ? 'אחר' : cats[0].name;
+    }
+
+    // המרת תאריך dd-mm-yyyy / dd/mm/yyyy ל-ISO
+    function toISODate(v) {
+        if (v instanceof Date) return v.toISOString().slice(0,10);
+        if (typeof v === 'number') { // תאריך אקסל סריאלי
+            const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+            return isNaN(d) ? '' : d.toISOString().slice(0,10);
+        }
+        if (!v) return '';
+        const s = String(v).trim();
+        let m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/);
+        if (m) { let [_,d,mo,y]=m; if(y.length===2)y='20'+y; return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`; }
+        m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
+        if (m) { let [_,y,mo,d]=m; return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`; }
+        return s;
+    }
+
+    // מציאת שורת הכותרות ומיפוי אינדקסים לפי שמות עמודות בעברית
+    function locateColumns(matrix) {
+        const need = ['תאריך עסקה','שם בית העסק','קטגוריה','סכום חיוב','סוג עסקה'];
+        for (let i = 0; i < Math.min(matrix.length, 15); i++) {
+            const row = (matrix[i]||[]).map(c => String(c||'').trim());
+            const hits = need.filter(n => row.includes(n)).length;
+            if (hits >= 3) {
+                const idx = {};
+                row.forEach((c,j) => { idx[c] = j; });
+                return { headerRow: i, idx };
+            }
+        }
+        return null;
+    }
+
     function importExcel(input) {
+        if (!input.files || !input.files[0]) return;
         const r = new FileReader();
         r.onload = e => {
-            const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            rows.forEach(row => {
-                const vals = Object.values(row);
-                const amount = vals.find(v => typeof v === 'number');
-                const desc = vals.find(v => typeof v === 'string' && v.length > 2) || (currentLang === 'he' ? 'ייבוא' : 'Import');
-                if(amount) {
-                    db.push({
-                        id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-                        date: new Date().toISOString().slice(0,10),
-                        desc: desc,
-                        amount: Math.abs(amount),
-                        cat: 'אחר',
-                        tags: 'ייבוא',
-                        type: amount > 0 ? 'income' : 'expense'
-                    });
-                }
-            });
-            saveData();
-            showToast(currentLang === 'he' ? 'ייבוא הושלם' : 'Import complete');
+            let matrix;
+            try {
+                const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellDates:true});
+                matrix = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:''});
+            } catch(err) {
+                showToast('שגיאה בקריאת הקובץ'); input.value=''; return;
+            }
+
+            const loc = locateColumns(matrix);
+            if (!loc) {
+                showToast('לא זוהה מבנה קובץ אשראי תקין'); input.value=''; return;
+            }
+            const { headerRow, idx } = loc;
+            const col = name => idx[name];
+            const parsed = [];
+
+            for (let i = headerRow + 1; i < matrix.length; i++) {
+                const row = matrix[i] || [];
+                const rawDate = row[col('תאריך עסקה')];
+                const merchant = String(row[col('שם בית העסק')] || '').trim();
+                let amountRaw = row[col('סכום חיוב')];
+                if (amountRaw === '' || amountRaw == null) amountRaw = row[idx['סכום עסקה מקורי']];
+                const amount = parseFloat(String(amountRaw).replace(/[^\d.\-]/g,''));
+                if (!merchant || isNaN(amount) || amount === 0) continue; 
+
+                const bankCat = String(row[col('קטגוריה')] || '').trim();
+                const txType = String(row[col('סוג עסקה')] || '').trim();
+                const card = String(row[idx['4 ספרות אחרונות של כרטיס האשראי']] || '').trim();
+                const note = String(row[idx['הערות']] || '').trim();
+                const isRefund = amount < 0 || /ביטול|זיכוי/.test(txType);
+
+                const iso = toISODate(rawDate);
+                const dup = db.some(t => t.date === iso && Math.abs(t.amount - Math.abs(amount)) < 0.01 && t.desc && t.desc.includes(merchant.slice(0,6)));
+
+                parsed.push({
+                    include: !dup,
+                    dup,
+                    date: iso,
+                    desc: merchant,
+                    amount: Math.abs(amount),
+                    type: isRefund ? 'income' : 'expense',
+                    typeLabel: txType || (isRefund ? 'זיכוי' : 'רגילה'),
+                    card,
+                    note,
+                    cat: isRefund ? (cats.find(c=>c.name==='הכנסה נוספת')?'הכנסה נוספת':detectCatSmart(bankCat, merchant)) : detectCatSmart(bankCat, merchant)
+                });
+            }
+
+            input.value = '';
+            if (!parsed.length) { showToast('לא נמצאו רשומות לייבוא'); return; }
+            pendingImport = parsed;
+            renderImportPreview();
+            openModal('import-modal');
         };
         r.readAsArrayBuffer(input.files[0]);
+    }
+
+    function renderImportPreview() {
+        const opts = cats.map(c => c.name);
+        const newCount = pendingImport.filter(p => !p.dup).length;
+        const dupCount = pendingImport.length - newCount;
+        document.getElementById('import-summary').innerHTML =
+            `נמצאו <b>${pendingImport.length}</b> רשומות · <b style="color:var(--success)">${newCount}</b> חדשות · <b style="color:#f59e0b">${dupCount}</b> כפולות. עברו על הקטגוריות, שנו מה שצריך, ואשרו.`;
+        document.getElementById('import-tbody').innerHTML = pendingImport.map((p,i) => {
+            const catOpts = opts.map(o => `<option value="${o}" ${o===p.cat?'selected':''}>${o}</option>`).join('');
+            const sign = p.type === 'income' ? '+' : '-';
+            const col = p.type === 'income' ? 'var(--success)' : 'var(--danger)';
+            return `<tr style="border-bottom:1px solid #f0f0f0; ${p.dup?'background:#fffbeb;':''}">
+                <td style="text-align:center; padding:6px;"><input type="checkbox" ${p.include?'checked':''} onchange="pendingImport[${i}].include=this.checked" style="width:18px;height:18px;"></td>
+                <td style="text-align:center; padding:6px; white-space:nowrap;">${p.date}${p.dup?' <span title="קיים כבר" style="color:#f59e0b;">⚠</span>':''}</td>
+                <td style="text-align:right; padding:6px;">${p.desc}${p.note?` <span style="color:#999;font-size:0.75rem;">(${p.note})</span>`:''}</td>
+                <td style="text-align:center; padding:6px; font-weight:700; color:${col}; white-space:nowrap;">${sign}${p.amount.toLocaleString()} ₪</td>
+                <td style="text-align:center; padding:6px; font-size:0.78rem;">${p.typeLabel}</td>
+                <td style="text-align:center; padding:6px; color:#666;">${p.card||'-'}</td>
+                <td style="padding:6px;"><select class="input-control" style="padding:5px; font-size:0.82rem;" onchange="pendingImport[${i}].cat=this.value">${catOpts}</select></td>
+            </tr>`;
+        }).join('');
+    }
+
+    function importToggleAll(val) {
+        pendingImport.forEach(p => p.include = val);
+        renderImportPreview();
+    }
+
+    function confirmImport() {
+        const chosen = pendingImport.filter(p => p.include);
+        if (!chosen.length) { showToast('לא סומנו רשומות'); return; }
+        chosen.forEach(p => {
+            db.push({
+                id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()+Math.random()),
+                date: p.date || new Date().toISOString().slice(0,10),
+                desc: p.desc,
+                amount: p.amount,
+                cat: p.cat,
+                tags: 'ייבוא אשראי',
+                type: p.type
+            });
+        });
+        pendingImport = [];
+        closeModal('import-modal');
+        saveData();
+        renderAll();
+        showToast(`יובאו ${chosen.length} רשומות בהצלחה`);
     }
 
     function autoCat(v) {
