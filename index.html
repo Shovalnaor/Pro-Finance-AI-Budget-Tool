@@ -13,7 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
-    <!-- Firebase Compat SDKs (כולל Auth) -->
+    <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -724,9 +724,10 @@
     }
 
     // --- FIREBASE SYNC FUNCTIONS ---
+    // שמירת נתונים ישירות לשורש המסד
     function saveData() {
-        if(!currentUser) return;
-        rtdb.ref(`users/${currentUser.uid}/financeData`).set({
+        if (!currentUser) return;
+        rtdb.ref().set({
             db: db,
             recurring: recurring,
             goals: goals,
@@ -741,9 +742,10 @@
         });
     }
 
+    // טעינת נתונים בזמן אמת משורש המסד
     function initLiveSync() {
-        if(!currentUser) return;
-        rtdb.ref(`users/${currentUser.uid}/financeData`).on('value', (snapshot) => {
+        if (!currentUser) return;
+        rtdb.ref().on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 db = data.db || [];
@@ -752,8 +754,6 @@
                 cats = data.cats || cats;
                 budgets = data.budgets || {};
                 dismissedAlerts = data.dismissedAlerts || [];
-            } else {
-                db = []; recurring = []; goals = []; budgets = {}; dismissedAlerts = [];
             }
             cleanDataSilently();
             runRecurringEngine();
