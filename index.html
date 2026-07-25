@@ -13,9 +13,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
-    <!-- Firebase Compat SDKs -->
+    <!-- Firebase Compat SDKs (כולל Auth) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -53,7 +54,6 @@
         .tab-btn:hover { background: rgba(255,255,255,0.1); color: white; }
         .tab-btn.active { color: white; border-bottom-color: #fbbf24; background: rgba(0,0,0,0.1); }
         
-        /* AI Tab Styles */
         .tab-btn.ai-special { color: #e0e7ff; text-shadow: 0 0 8px rgba(139, 92, 246, 0.6); font-weight: 800; }
         .tab-btn.ai-special.active { background: rgba(139, 92, 246, 0.2); border-bottom-color: #8b5cf6; color: white; }
 
@@ -95,7 +95,6 @@
         .ai-item { display: flex; gap: 12px; margin-bottom: 10px; font-size: 0.9rem; color: #d1d5db; line-height: 1.5; }
         .ai-icon { width: 24px; height: 24px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem; }
 
-        /* --- AI SECTION STYLES --- */
         .ai-section { background: var(--ai-bg); padding: 25px; border-radius: var(--radius); border: 2px solid var(--ai-glow); box-shadow: var(--card-shadow); }
         .ai-result-box { background: var(--white); padding: 25px; border-radius: 8px; border-right: 5px solid var(--ai-glow); margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); line-height: 1.6; }
         .ai-result-box table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 15px; }
@@ -126,7 +125,6 @@
         .anomaly-flag { color: var(--danger); margin-right: 5px; font-size: 0.8rem; animation: pulse 1s infinite alternate; }
         @keyframes pulse { 0% {transform: scale(0.9); opacity: 0.7;} 50% {transform: scale(1.1);} 100% {transform: scale(1); opacity: 1;} }
 
-        /* UPGRADE STYLES */
         .demo-banner { background: #fef08a; color: #854d0e; text-align: center; padding: 10px; font-weight: bold; position: relative; display: none; }
         .alert-bar { background: var(--danger); color: white; text-align: center; padding: 15px; font-weight: bold; font-size: 1.1rem; position: fixed; top: 0; left: 0; right: 0; z-index: 2000; display: none; animation: flash 1s infinite alternate; }
         @keyframes flash { from { background: var(--danger); } to { background: #991b1b; } }
@@ -138,7 +136,6 @@
         .heatmap-cell:hover { color: #fff; transform: scale(1.1); z-index: 10; font-weight: bold; text-shadow: 0 0 2px #000; }
         .heatmap-header { text-align: center; font-size: 0.8rem; font-weight: bold; color: #6b7280; margin-bottom: 5px; }
 
-        /* SVG Rings for goals */
         .circular-chart { display: block; margin: 10px auto; max-width: 80%; max-height: 100px; }
         .circle-bg { fill: none; stroke: #eee; stroke-width: 3.8; }
         .circle { fill: none; stroke-width: 2.8; stroke-linecap: round; animation: progress 1s ease-out forwards; }
@@ -189,9 +186,10 @@
         <div style="font-weight:900; font-size:1.4rem; display:flex; align-items:center; gap:12px;">
             <i class="fas fa-gem" style="color: #fbbf24;"></i> Pro-Finance
         </div>
-        <div style="display:flex; gap:12px;">
+        <div style="display:flex; gap:12px; align-items:center;">
             <button onclick="toggleLang()" class="action-btn" style="color:white; font-size:1.2rem;" title="Change Language"><i class="fas fa-globe"></i></button>
             <button onclick="toggleTheme()" class="action-btn" style="color:white; font-size:1.2rem;" title="Toggle Dark Mode"><i class="fas fa-moon"></i></button>
+            <button id="btn-logout" onclick="logoutUser()" class="action-btn" style="color:white; font-size:1.2rem; display:none;" title="התנתק"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </header>
 
@@ -212,7 +210,6 @@
     </div>
 
     <div class="content-area">
-        
         <div id="tab-dash" class="tab-pane active">
             <div class="health-widget">
                 <div class="health-main">
@@ -222,10 +219,8 @@
                     </div>
                     <div class="health-score" id="health-score">--</div>
                 </div>
-                <div class="health-details" id="health-details-box">
-                    </div>
-                <div class="ai-insights" id="ai-insights-box">
-                    </div>
+                <div class="health-details" id="health-details-box"></div>
+                <div class="ai-insights" id="ai-insights-box"></div>
             </div>
 
             <div class="card-grid">
@@ -401,8 +396,7 @@
                 </div>
                 <div class="chart-container" style="height:350px; margin-bottom: 30px;"><canvas id="c-cat-trend-line"></canvas></div>
                 
-                <div id="cat-monthly-breakdown" style="margin-bottom:30px;">
-                    </div>
+                <div id="cat-monthly-breakdown" style="margin-bottom:30px;"></div>
 
                 <h3 style="margin-bottom:15px;" data-i18n="catDetails">פירוט רשומות</h3>
                 <div style="overflow-x:auto;">
@@ -589,24 +583,21 @@
 
     </div>
 
-    <div id="onboarding-modal" class="modal-overlay" style="display:none; z-index:11000; background:rgba(15,118,110,0.9);">
-        <div class="modal-box" id="ob-step-1" style="text-align:center;">
-            <div style="font-size:3rem; margin-bottom:10px;">🎯</div>
-            <h2>ברוך הבא ל-Pro-Finance!</h2>
-            <p>הגדר תקציב חודשי לכל קטגוריה כדי להתחיל לשלוט בהוצאות.</p>
-            <button class="btn-primary" style="width:100%; margin-top:15px;" onclick="nextObStep(2)">המשך</button>
-        </div>
-        <div class="modal-box" id="ob-step-2" style="text-align:center; display:none;">
-            <div style="font-size:3rem; margin-bottom:10px;">💰</div>
-            <h2>הוסף הכנסה ראשונה</h2>
-            <p>כדי שנדע מאיפה מתחילים, מהי ההכנסה החודשית הצפויה שלך?</p>
-            <button class="btn-primary" style="width:100%; margin-top:15px;" onclick="nextObStep(3)">המשך</button>
-        </div>
-        <div class="modal-box" id="ob-step-3" style="text-align:center; display:none;">
-            <div style="font-size:3rem; margin-bottom:10px;">💳</div>
-            <h2>הוסף הוצאה ראשונה</h2>
-            <p>הכנס את ההוצאה המשמעותית הראשונה שלך ונתחיל לעקוב.</p>
-            <button class="btn-primary" style="width:100%; margin-top:15px; background:var(--success);" onclick="finishOnboarding()">סיום והתחלת עבודה</button>
+    <!-- AUTH MODAL (LOGIN / SIGNUP) -->
+    <div id="auth-modal" class="modal-overlay" style="display:flex; z-index:12000; background:rgba(15,118,110,0.95);">
+        <div class="modal-box" style="text-align:center;">
+            <div style="font-size:3rem; margin-bottom:10px;">🔐</div>
+            <h2 id="auth-title">התחברות למערכת</h2>
+            <div style="display:flex; flex-direction:column; gap:12px; margin-top:20px;">
+                <input type="email" id="auth-email" class="input-control" placeholder="אימייל" required dir="ltr">
+                <input type="password" id="auth-password" class="input-control" placeholder="סיסמה (לפחות 6 תווים)" required dir="ltr">
+                <div id="auth-error" style="color:var(--danger); font-size:0.85rem; font-weight:bold; display:none;"></div>
+                <button class="btn-primary" style="width:100%; height:48px;" id="auth-btn-submit" onclick="handleAuthSubmit()">התחבר</button>
+                <div style="font-size:0.9rem; margin-top:10px;">
+                    <span id="auth-toggle-text">אין לך חשבון?</span> 
+                    <a href="#" onclick="toggleAuthMode(); return false;" id="auth-toggle-link" style="color:var(--primary); font-weight:bold; text-decoration:underline;">הרשם עכשיו</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -652,7 +643,12 @@
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const rtdb = firebase.database();
+    const auth = firebase.auth();
     if (firebase.analytics) { firebase.analytics(); }
+
+    // --- AUTHENTICATION STATE ---
+    let currentUser = null;
+    let isSignUpMode = false;
 
     // --- STATE MANAGEMENT ---
     let db = [];
@@ -680,7 +676,119 @@
     let editingId = null;
     let globalSmartMetrics = {};
 
-    // --- KEYWORDS FOR SMART AUTO-COMPLETE ---
+    // --- AUTH LOGIC ---
+    function toggleAuthMode() {
+        isSignUpMode = !isSignUpMode;
+        document.getElementById('auth-title').innerText = isSignUpMode ? 'הרשמה למערכת' : 'התחברות למערכת';
+        document.getElementById('auth-btn-submit').innerText = isSignUpMode ? 'צור חשבון' : 'התחבר';
+        document.getElementById('auth-toggle-text').innerText = isSignUpMode ? 'כבר יש לך חשבון?' : 'אין לך חשבון?';
+        document.getElementById('auth-toggle-link').innerText = isSignUpMode ? 'התחבר כאן' : 'הרשם עכשיו';
+        document.getElementById('auth-error').style.display = 'none';
+    }
+
+    async function handleAuthSubmit() {
+        const email = document.getElementById('auth-email').value.trim();
+        const password = document.getElementById('auth-password').value;
+        const errDiv = document.getElementById('auth-error');
+        errDiv.style.display = 'none';
+
+        if(!email || !password) {
+            errDiv.innerText = 'נא למלא אימייל וסיסמה';
+            errDiv.style.display = 'block';
+            return;
+        }
+
+        try {
+            if(isSignUpMode) {
+                await auth.createUserWithEmailAndPassword(email, password);
+                showToast('החשבון נוצר בהצלחה!');
+            } else {
+                await auth.signInWithEmailAndPassword(email, password);
+                showToast('התחברת בהצלחה!');
+            }
+        } catch(e) {
+            console.error(e);
+            let msg = 'שגיאה בהתחברות';
+            if(e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') msg = 'אימייל או סיסמה שגויים';
+            if(e.code === 'auth/email-already-in-use') msg = 'כתובת האימייל כבר קיימת במערכת';
+            if(e.code === 'auth/weak-password') msg = 'הסיסמה חלשה מדי (לפחות 6 תווים)';
+            errDiv.innerText = msg;
+            errDiv.style.display = 'block';
+        }
+    }
+
+    function logoutUser() {
+        if(confirm('האם ברצונך להתנתק?')) {
+            auth.signOut();
+        }
+    }
+
+    // --- FIREBASE SYNC FUNCTIONS ---
+    function saveData() {
+        if(!currentUser) return;
+        rtdb.ref(`users/${currentUser.uid}/financeData`).set({
+            db: db,
+            recurring: recurring,
+            goals: goals,
+            cats: cats,
+            budgets: budgets,
+            dismissedAlerts: dismissedAlerts
+        }).then(() => {
+            checkBudgetAlerts();
+        }).catch((e) => {
+            console.error('Firebase save error:', e);
+            showToast('שגיאה בסנכרון הנתונים לענן');
+        });
+    }
+
+    function initLiveSync() {
+        if(!currentUser) return;
+        rtdb.ref(`users/${currentUser.uid}/financeData`).on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                db = data.db || [];
+                recurring = data.recurring || [];
+                goals = data.goals || [];
+                cats = data.cats || cats;
+                budgets = data.budgets || {};
+                dismissedAlerts = data.dismissedAlerts || [];
+            } else {
+                db = []; recurring = []; goals = []; budgets = {}; dismissedAlerts = [];
+            }
+            cleanDataSilently();
+            runRecurringEngine();
+            renderAll();
+            checkBudgetAlerts();
+        });
+    }
+
+    function init() {
+        const savedApiKey = localStorage.getItem('gemini_api_key');
+        if(savedApiKey && document.getElementById('gemini-api-key')) {
+            document.getElementById('gemini-api-key').value = savedApiKey;
+        }
+
+        if(document.getElementById('in-date')) {
+            document.getElementById('in-date').valueAsDate = new Date();
+        }
+
+        // האזנה לשינוי סטטוס המשתמש
+        auth.onAuthStateChanged((user) => {
+            if(user) {
+                currentUser = user;
+                document.getElementById('auth-modal').style.display = 'none';
+                document.getElementById('btn-logout').style.display = 'block';
+                initLiveSync();
+            } else {
+                currentUser = null;
+                document.getElementById('auth-modal').style.display = 'flex';
+                document.getElementById('btn-logout').style.display = 'none';
+                db = []; recurring = []; goals = []; budgets = {};
+                renderAll();
+            }
+        });
+    }
+
     const categoryKeywords = {
         'חופשות': ['ירח דבש', 'honeymoon', 'תאילנד', 'ויטנאם', 'איטליה', 'motoGP', 'טיסה', 'מלון', 'booking', 'airbnb'],
         'חיות מחמד': ['כלב', 'גור', 'אוכל לכלבים', 'וטרינר', 'צעצועים', 'פנסיון'],
@@ -700,7 +808,7 @@
     const translations = {
         he: {
             navDash: "📊 מבט על", navJournal: "📝 יומן", navMonthly: "📅 חודשי", navCat: "🔍 קטגוריות", navGoals: "🎯 יעדים", navForecast: "🔮 תחזית", navScenario: "💡 סימולטור", navRecurring: "🔄 קבע", navSettings: "⚙️ הגדרות", navAbout: "ℹ️ אודות",
-            healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", kpiSavRate: "שיעור חיסכון כולל", kpiBurn: "חיזוי הוצאה לסוף החודש", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", trendTitle: "מגמת הככנסות מול הוצאות", waterfallTitle: "זרימת כספים (Waterfall)", heatmapTitle: "מפת חום - הוצאות שבועיות (החודש)",
+            healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", kpiSavRate: "שיעור חיסכון כולל", kpiBurn: "חיזוי הוצאה לסוף החודש", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", trendTitle: "מגמת הכנסות מול הוצאות", waterfallTitle: "זרימת כספים (Waterfall)", heatmapTitle: "מפת חום - הוצאות שבועיות (החודש)",
             aiHeading: "🤖 סוכן אסטרטגיה פיננסית", aiDesc1: "ה-AI ינתח את ההוצאות שלך ויגיד לך את האמת על הניהול הכספי שלך. <strong>הוא מונחה לא להגיד לך מה שאתה רוצה לשמוע</strong>, אלא לבקר בצורה אובייקטיבית וישירה את ההוצאות המיותרות ולתת פתרונות אמיתיים בהתבסס על מודל החיזוי והמדדים הפיננסיים שהמערכת חישבה.", aiBtn: "✨ נתח את התיק הפיננסי שלי מול התחזיות", aiLoading: "משלב נתוני חיזוי למודל LLM אובייקטיבי, נא להמתין...",
             autoCatBadge: "✨ זוהה אוטומטית", addTxTitle: "<i class='fas fa-edit'></i> הוספת תנועה", lblDate: "תאריך", lblDesc: "תיאור העסקה", descPlaceholder: "לדוגמה: ירח דבש בתאילנד...", lblAmount: "סכום", lblCat: "קטגוריה", lblTags: "תגיות (מופרדות בפסיק)", lblInstallments: "תשלומים", btnAdd: "הוסף למערכת", journalTitle: "יומן תנועות מלא", searchPlaceholder: "חיפוש...", opt100: "100 אחרונות", opt500: "500 אחרונות", optAll: "הצג הכל", btnImportExcel: "<i class='fas fa-file-import'></i> ייבוא", thDate: "תאריך", thDesc: "תיאור", thTags: "תגיות", thCat: "קטגוריה", thAmount: "סכום", thActions: "פעולות",
             monthlyDetailTitle: "ניתוח חודשי מפורט", monthInc: "הכנסות", monthExp: "הוצאות", monthBal: "יתרה", monthAvg: "ממוצע יומי", chartDaily: "פילוח לפי ימים", chartCat: "פילוח קטגוריות",
@@ -732,83 +840,12 @@
         }
     };
 
-    // --- FIREBASE SYNC FUNCTIONS ---
-    function saveData() {
-        rtdb.ref('financeData').set({
-            db: db,
-            recurring: recurring,
-            goals: goals,
-            cats: cats,
-            budgets: budgets,
-            dismissedAlerts: dismissedAlerts
-        }).then(() => {
-            checkBudgetAlerts();
-        }).catch((e) => {
-            console.error('Firebase save error:', e);
-            showToast('שגיאה בסנכרון הנתונים לענן');
-        });
-    }
-
-    function initLiveSync() {
-        rtdb.ref('financeData').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                db = data.db || [];
-                recurring = data.recurring || [];
-                goals = data.goals || [];
-                cats = data.cats || cats;
-                budgets = data.budgets || {};
-                dismissedAlerts = data.dismissedAlerts || [];
-                
-                cleanDataSilently();
-                runRecurringEngine();
-                renderAll();
-                checkBudgetAlerts();
-            }
-        });
-    }
-
-    function init() {
-        const savedApiKey = localStorage.getItem('gemini_api_key');
-        if(savedApiKey && document.getElementById('gemini-api-key')) {
-            document.getElementById('gemini-api-key').value = savedApiKey;
-        }
-
-        if(document.getElementById('in-date')) {
-            document.getElementById('in-date').valueAsDate = new Date();
-        }
-        
-        initLiveSync();
-    }
-
     function cleanDataSilently() {
         db.forEach(tx => {
             if(typeof tx.amount === 'string') { tx.amount = parseFloat(tx.amount.replace(/₪|,/g, '')); }
             if(tx.cat && tx.cat.includes('₪')) { tx.cat = tx.cat.replace(/₪/g, '').trim(); }
             if(!tx.tags) { tx.tags = ''; } 
         });
-    }
-
-    function checkOnboarding() {
-        const onboarded = localStorage.getItem('profinance_onboarded');
-        if (!onboarded) {
-            injectDemoDataSilently();
-            document.getElementById('demo-banner').style.display = 'block';
-            document.getElementById('onboarding-modal').style.display = 'flex';
-        } else if (localStorage.getItem('profinance_demo_active') === 'true') {
-            document.getElementById('demo-banner').style.display = 'block';
-        }
-    }
-
-    function nextObStep(step) {
-        document.querySelectorAll('#onboarding-modal .modal-box').forEach(el => el.style.display = 'none');
-        document.getElementById('ob-step-' + step).style.display = 'block';
-    }
-
-    function finishOnboarding() {
-        localStorage.setItem('profinance_onboarded', 'true');
-        document.getElementById('onboarding-modal').style.display = 'none';
-        renderAll();
     }
 
     function renderAll() {
@@ -853,7 +890,6 @@
         if(id === 'tab-journal') setTimeout(renderJournal, 50);
     }
 
-    // --- ALERTS ENGINE ---
     function checkBudgetAlerts() {
         const _currentMonthKey = new Date().toISOString().slice(0,7);
         const _storedAlertMonth = localStorage.getItem('finAlertsMonth');
@@ -1915,7 +1951,6 @@
 
     function renderGoals() {
         const container = document.getElementById('goals-list');
-        
         const now = new Date();
         const last3Months = [];
         for(let i=0; i<3; i++) last3Months.push(new Date(now.getFullYear(), now.getMonth()-i, 1).toISOString().slice(0,7));
@@ -2082,7 +2117,6 @@
         renderAll();
     }
 
-    // --- DEMO DATA INJECTION ---
     function loadDemoData() {
         if(confirm(currentLang === 'he' ? 'פעולה זו תמחק את הנתונים הקיימים ותטען נתוני הדגמה. להמשיך?' : 'This will replace existing data with demo data. Continue?')) {
             injectDemoDataSilently();
