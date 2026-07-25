@@ -13,6 +13,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -632,34 +637,48 @@
     </div>
 
 <script>
+    // --- FIREBASE CONFIGURATION ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCHDGsmd8hVnjqpufsfL9K5YTB1KayhPRw",
+        authDomain: "pro-finance-49d4a.firebaseapp.com",
+        databaseURL: "https://pro-finance-49d4a-default-rtdb.firebaseio.com",
+        projectId: "pro-finance-49d4a",
+        storageBucket: "pro-finance-49d4a.firebasestorage.app",
+        messagingSenderId: "680375086937",
+        appId: "1:680375086937:web:8cf203f092013fee2ca648",
+        measurementId: "G-B10CTXDRLS"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const rtdb = firebase.database();
+    if (firebase.analytics) { firebase.analytics(); }
+
     // --- STATE MANAGEMENT ---
-    let db = []; try { db = JSON.parse(localStorage.getItem('finDataV3')) || []; } catch(e) { db = []; }
-    let recurring = []; try { recurring = JSON.parse(localStorage.getItem('finSubsV3')) || []; } catch(e) { recurring = []; }
-    let goals = []; try { goals = JSON.parse(localStorage.getItem('finGoalsV3')) || []; } catch(e) { goals = []; }
-    let cats = []; try { cats = JSON.parse(localStorage.getItem('finCatsV3')) || []; } catch(e) { cats = []; }
-    if (!cats.length) {
-        cats = [
-            {name: 'מזון וסופר', color: '#10b981'}, 
-            {name: 'דיור וחשבונות', color: '#3b82f6'},
-            {name: 'רכב ותחבורה', color: '#f59e0b'}, 
-            {name: 'בילויים ומסעדות', color: '#ef4444'},
-            {name: 'כושר וספורט', color: '#8b5cf6'}, 
-            {name: 'מתנות', color: '#ec4899'},
-            {name: 'חופשות', color: '#06b6d4'}, 
-            {name: 'חיות מחמד', color: '#6366f1'},
-            {name: 'קניות וביגוד', color: '#f97316'}, 
-            {name: 'בריאות', color: '#d946ef'}, 
-            {name: 'משכורת', color: '#22c55e'}, 
-            {name: 'הכנסה נוספת', color: '#84cc16'}
-        ];
-    }
-    let budgets = {}; try { budgets = JSON.parse(localStorage.getItem('finBudgetsV3')) || {}; } catch(e) { budgets = {}; }
-    let dismissedAlerts = []; try { dismissedAlerts = JSON.parse(localStorage.getItem('finAlertsV3')) || []; } catch(e) { dismissedAlerts = []; }
+    let db = [];
+    let recurring = [];
+    let goals = [];
+    let cats = [
+        {name: 'מזון וסופר', color: '#10b981'}, 
+        {name: 'דיור וחשבונות', color: '#3b82f6'},
+        {name: 'רכב ותחבורה', color: '#f59e0b'}, 
+        {name: 'בילויים ומסעדות', color: '#ef4444'},
+        {name: 'כושר וספורט', color: '#8b5cf6'}, 
+        {name: 'מתנות', color: '#ec4899'},
+        {name: 'חופשות', color: '#06b6d4'}, 
+        {name: 'חיות מחמד', color: '#6366f1'},
+        {name: 'קניות וביגוד', color: '#f97316'}, 
+        {name: 'בריאות', color: '#d946ef'}, 
+        {name: 'משכורת', color: '#22c55e'}, 
+        {name: 'הכנסה נוספת', color: '#84cc16'}
+    ];
+    let budgets = {};
+    let dismissedAlerts = [];
     
     let charts = {};
     let currentLang = 'he';
     let editingId = null;
-    let globalSmartMetrics = {}; // Holds calculated metrics for AI
+    let globalSmartMetrics = {};
 
     // --- KEYWORDS FOR SMART AUTO-COMPLETE ---
     const categoryKeywords = {
@@ -681,7 +700,7 @@
     const translations = {
         he: {
             navDash: "📊 מבט על", navJournal: "📝 יומן", navMonthly: "📅 חודשי", navCat: "🔍 קטגוריות", navGoals: "🎯 יעדים", navForecast: "🔮 תחזית", navScenario: "💡 סימולטור", navRecurring: "🔄 קבע", navSettings: "⚙️ הגדרות", navAbout: "ℹ️ אודות",
-            healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", kpiSavRate: "שיעור חיסכון כולל", kpiBurn: "חיזוי הוצאה לסוף החודש", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", trendTitle: "מגמת הכנסות מול הוצאות", waterfallTitle: "זרימת כספים (Waterfall)", heatmapTitle: "מפת חום - הוצאות שבועיות (החודש)",
+            healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", kpiSavRate: "שיעור חיסכון כולל", kpiBurn: "חיזוי הוצאה לסוף החודש", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", trendTitle: "מגמת הככנסות מול הוצאות", waterfallTitle: "זרימת כספים (Waterfall)", heatmapTitle: "מפת חום - הוצאות שבועיות (החודש)",
             aiHeading: "🤖 סוכן אסטרטגיה פיננסית", aiDesc1: "ה-AI ינתח את ההוצאות שלך ויגיד לך את האמת על הניהול הכספי שלך. <strong>הוא מונחה לא להגיד לך מה שאתה רוצה לשמוע</strong>, אלא לבקר בצורה אובייקטיבית וישירה את ההוצאות המיותרות ולתת פתרונות אמיתיים בהתבסס על מודל החיזוי והמדדים הפיננסיים שהמערכת חישבה.", aiBtn: "✨ נתח את התיק הפיננסי שלי מול התחזיות", aiLoading: "משלב נתוני חיזוי למודל LLM אובייקטיבי, נא להמתין...",
             autoCatBadge: "✨ זוהה אוטומטית", addTxTitle: "<i class='fas fa-edit'></i> הוספת תנועה", lblDate: "תאריך", lblDesc: "תיאור העסקה", descPlaceholder: "לדוגמה: ירח דבש בתאילנד...", lblAmount: "סכום", lblCat: "קטגוריה", lblTags: "תגיות (מופרדות בפסיק)", lblInstallments: "תשלומים", btnAdd: "הוסף למערכת", journalTitle: "יומן תנועות מלא", searchPlaceholder: "חיפוש...", opt100: "100 אחרונות", opt500: "500 אחרונות", optAll: "הצג הכל", btnImportExcel: "<i class='fas fa-file-import'></i> ייבוא", thDate: "תאריך", thDesc: "תיאור", thTags: "תגיות", thCat: "קטגוריה", thAmount: "סכום", thActions: "פעולות",
             monthlyDetailTitle: "ניתוח חודשי מפורט", monthInc: "הכנסות", monthExp: "הוצאות", monthBal: "יתרה", monthAvg: "ממוצע יומי", chartDaily: "פילוח לפי ימים", chartCat: "פילוח קטגוריות",
@@ -713,19 +732,61 @@
         }
     };
 
+    // --- FIREBASE SYNC FUNCTIONS ---
+    function saveData() {
+        rtdb.ref('financeData').set({
+            db: db,
+            recurring: recurring,
+            goals: goals,
+            cats: cats,
+            budgets: budgets,
+            dismissedAlerts: dismissedAlerts
+        }).then(() => {
+            checkBudgetAlerts();
+        }).catch((e) => {
+            console.error('Firebase save error:', e);
+            showToast('שגיאה בסנכרון הנתונים לענן');
+        });
+    }
+
+    function initLiveSync() {
+        rtdb.ref('financeData').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                db = data.db || [];
+                recurring = data.recurring || [];
+                goals = data.goals || [];
+                cats = data.cats || cats;
+                budgets = data.budgets || {};
+                dismissedAlerts = data.dismissedAlerts || [];
+                
+                cleanDataSilently();
+                runRecurringEngine();
+                renderAll();
+                checkBudgetAlerts();
+            }
+        });
+    }
+
     function init() {
         const savedApiKey = localStorage.getItem('gemini_api_key');
         if(savedApiKey && document.getElementById('gemini-api-key')) {
             document.getElementById('gemini-api-key').value = savedApiKey;
         }
 
-        cleanData();
-        checkOnboarding();
+        if(document.getElementById('in-date')) {
+            document.getElementById('in-date').valueAsDate = new Date();
+        }
         
-        document.getElementById('in-date').valueAsDate = new Date();
-        runRecurringEngine();
-        renderAll();
-        checkBudgetAlerts();
+        initLiveSync();
+    }
+
+    function cleanDataSilently() {
+        db.forEach(tx => {
+            if(typeof tx.amount === 'string') { tx.amount = parseFloat(tx.amount.replace(/₪|,/g, '')); }
+            if(tx.cat && tx.cat.includes('₪')) { tx.cat = tx.cat.replace(/₪/g, '').trim(); }
+            if(!tx.tags) { tx.tags = ''; } 
+        });
     }
 
     function checkOnboarding() {
@@ -748,30 +809,6 @@
         localStorage.setItem('profinance_onboarded', 'true');
         document.getElementById('onboarding-modal').style.display = 'none';
         renderAll();
-    }
-
-    function cleanData() {
-        let changed = false;
-        db.forEach(tx => {
-            if(typeof tx.amount === 'string') { tx.amount = parseFloat(tx.amount.replace(/₪|,/g, '')); changed = true; }
-            if(tx.cat.includes('₪')) { tx.cat = tx.cat.replace(/₪/g, '').trim(); changed = true; }
-            if(!tx.tags) { tx.tags = ''; changed = true; } 
-        });
-        if(changed) saveData();
-    }
-
-    function saveData() {
-        try {
-            localStorage.setItem('finDataV3', JSON.stringify(db));
-            localStorage.setItem('finSubsV3', JSON.stringify(recurring));
-            localStorage.setItem('finGoalsV3', JSON.stringify(goals));
-            localStorage.setItem('finCatsV3', JSON.stringify(cats));
-            localStorage.setItem('finBudgetsV3', JSON.stringify(budgets));
-            checkBudgetAlerts();
-        } catch(e) {
-            console.error('Storage error:', e);
-            showToast('שגיאה בשמירת נתונים — אחסון מלא?');
-        }
     }
 
     function renderAll() {
@@ -823,7 +860,6 @@
         if (_storedAlertMonth !== _currentMonthKey) {
             dismissedAlerts = [];
             try { 
-                localStorage.setItem('finAlertsV3', '[]');
                 localStorage.setItem('finAlertsMonth', _currentMonthKey);
             } catch(e) {}
         }
@@ -866,7 +902,6 @@
         const alertId = alertBar.dataset.alertId;
         if(alertId) {
             dismissedAlerts.push(alertId);
-            try { localStorage.setItem('finAlertsV3', JSON.stringify(dismissedAlerts)); } catch(e) {}
         }
         alertBar.style.display = 'none';
     }
@@ -901,7 +936,6 @@
         const predictedVariable = dailyVariableRate * daysInMonth;
         const predictedTotalSpend = fixedSpend + pendingFixed + predictedVariable;
 
-        // Save for global AI metrics
         globalSmartMetrics.predictedTotalSpend = predictedTotalSpend;
         globalSmartMetrics.dailyVariableRate = dailyVariableRate;
         globalSmartMetrics.pendingFixed = pendingFixed;
@@ -927,7 +961,6 @@
         const thisMonth = today.toISOString().slice(0,7);
         const monthExp = db.filter(t => t.type==='expense' && t.date.startsWith(thisMonth)).reduce((a,b)=>a+b.amount,0);
         
-        // Smart Prediction Update
         const prediction = calculatePrediction(thisMonth);
         const burnEl = document.getElementById('kpi-burn');
         const burnSubEl = document.getElementById('kpi-burn-sub');
@@ -1031,7 +1064,6 @@
         if(!anyBudget) container.innerHTML = `<p style="text-align:center; color:#94a3b8; padding:20px;">${currentLang === 'he' ? 'לא הוגדרו תקציבים. ניתן להגדיר בטאב ההגדרות.' : 'No budgets set. You can set them in the Settings tab.'}</p>`;
     }
 
-    // Advanced Financial Health Score
     function updateHealthScore() {
         const today = new Date();
         const thisMonth = today.toISOString().slice(0,7);
@@ -1043,7 +1075,6 @@
         let pSavings = 0, pBudget = 0, pStability = 0, pFixed = 0;
 
         if (mInc > 0 || mExp > 0) {
-            // 1. Savings Rate Score (35%)
             let savRate = mInc > 0 ? ((mInc - mExp) / mInc) * 100 : -100;
             if (savRate > 20) pSavings = 100;
             else if (savRate > 10) pSavings = 80;
@@ -1051,7 +1082,6 @@
             else if (savRate > 0) pSavings = 40;
             else pSavings = 10;
             
-            // 2. Budget Adherence Score (30%)
             const spending = {};
             monthData.filter(t => t.type === 'expense').forEach(t => spending[t.cat] = (spending[t.cat] || 0) + t.amount);
             let catsWithBudget = 0;
@@ -1063,9 +1093,8 @@
                     if ((spending[c.name] || 0) <= limit) catsUnderBudget++;
                 }
             });
-            pBudget = catsWithBudget > 0 ? (catsUnderBudget / catsWithBudget) * 100 : 70; // Fallback if no budgets set
+            pBudget = catsWithBudget > 0 ? (catsUnderBudget / catsWithBudget) * 100 : 70;
 
-            // 3. Stability Score (20%) - simplified variance fallback
             const lastMonth = new Date(today.getFullYear(), today.getMonth()-1, 1).toISOString().slice(0,7);
             const lastMonthExp = db.filter(t => t.type==='expense' && t.date.startsWith(lastMonth)).reduce((a,b)=>a+b.amount,0);
             if (lastMonthExp > 0) {
@@ -1075,10 +1104,9 @@
                 else if (variance < 0.4) pStability = 50;
                 else pStability = 20;
             } else {
-                pStability = 70; // Fallback
+                pStability = 70;
             }
 
-            // 4. Fixed Ratio Score (15%)
             const recurringNames = recurring.map(r => `🔄 ${r.name}`);
             let fixedSpend = monthData.filter(t => t.type==='expense' && (recurringNames.includes(t.desc) || (t.tags && t.tags.includes('הוראת קבע')))).reduce((a,b)=>a+b.amount,0);
             let totalExpectedFixed = recurring.reduce((a,b)=>a+parseFloat(b.amount),0);
@@ -1090,16 +1118,13 @@
             else if (fixedRatio < 70) pFixed = 50;
             else pFixed = 20;
 
-            // Final Calculation
             finalScore = Math.round((0.35 * pSavings) + (0.30 * pBudget) + (0.20 * pStability) + (0.15 * pFixed));
         }
 
-        // Output to Global Metrics for AI
         globalSmartMetrics.healthScore = finalScore;
         globalSmartMetrics.savingsScore = pSavings;
         globalSmartMetrics.budgetScore = pBudget;
 
-        // Render Score
         const el = document.getElementById('health-score');
         const txt = document.getElementById('health-text');
         
@@ -1114,7 +1139,6 @@
             else txt.innerText = currentLang === 'he' ? "דורש התערבות מיידית" : "Needs Immediate Attention";
         }
 
-        // Render Breakdown
         const detailsBox = document.getElementById('health-details-box');
         if (detailsBox && finalScore > 0) {
             detailsBox.innerHTML = `
@@ -1128,7 +1152,6 @@
         generateSmartInsights();
     }
 
-    // Automatic Spending Insights Engine
     function generateSmartInsights() {
         const insightsBox = document.getElementById('ai-insights-box');
         if (!insightsBox) return;
@@ -1143,7 +1166,6 @@
         let insights = [];
         globalSmartMetrics.anomalies = [];
 
-        // 1. Anomaly Detection (> 3x category average)
         const catHistory = {};
         db.filter(t => t.type === 'expense' && !t.date.startsWith(thisMonth)).forEach(t => {
             if(!catHistory[t.cat]) catHistory[t.cat] = [];
@@ -1162,7 +1184,6 @@
             }
         });
 
-        // 2. Pareto Principle (Top 20% Categories)
         const catSpends = {};
         let totalMonthSpend = 0;
         monthTx.forEach(t => {
@@ -1180,15 +1201,13 @@
             }
         }
 
-        // 3. Weekend vs Weekday
         let weekendSpend = 0, weekdaySpend = 0;
         monthTx.forEach(t => {
             const d = new Date(t.date).getDay();
-            if(d === 5 || d === 6) weekendSpend += t.amount; // Friday/Saturday
+            if(d === 5 || d === 6) weekendSpend += t.amount;
             else weekdaySpend += t.amount;
         });
         const daysElapsed = new Date().getDate();
-        // Rough estimation of weekends passed (approx 2 per 7 days)
         const weekendsPassed = Math.floor(daysElapsed / 7) * 2 + (daysElapsed % 7 > 5 ? 1 : 0) || 1;
         const weekdaysPassed = (daysElapsed - weekendsPassed) || 1;
         
@@ -1200,7 +1219,6 @@
             insights.push({ icon: '🏖️', text: currentLang === 'he' ? `זיהוי דפוס: אתה מוציא פי ${globalSmartMetrics.weekendMulti} יותר בסופי שבוע מאשר באמצע השבוע.` : `Pattern: You spend ${globalSmartMetrics.weekendMulti}x more on weekends.` });
         }
 
-        // 4. Recurring Check
         if(recurring.length > 0) {
             const totalRec = recurring.reduce((a,b)=>a+parseFloat(b.amount),0);
             insights.push({ icon: '🔄', text: currentLang === 'he' ? `יש לך ${recurring.length} מנויים והוראות קבע בסך ${totalRec}₪ חודשי.` : `You have ${recurring.length} subscriptions totaling ${totalRec}₪.` });
@@ -1212,7 +1230,6 @@
         });
         insightsBox.innerHTML = html;
         
-        // Trigger a redraw of journal to show anomaly flags
         if(foundAnomaly) renderJournal();
     }
 
@@ -1430,7 +1447,6 @@
         if(type === 'savings') userQuery = "בהתבסס על החיזוי הנוכחי, האם אני עומד ביעדים?";
         if(type === 'plan') userQuery = "בנה לי תכנית אגרסיבית ל-3 חודשים הקרובים בהתבסס על החריגות והמדדים.";
 
-        // Inject the smart metrics calculated by the local engine
         const aiContextData = {
             raw_data_sample: db.slice(-50),
             smart_metrics: globalSmartMetrics,
@@ -1614,7 +1630,6 @@
         
         const anomalyIds = globalSmartMetrics.anomalies ? globalSmartMetrics.anomalies.map(a => a.desc) : [];
 
-        // NEW: Control the rendering limit
         const limitEl = document.getElementById('journal-limit');
         const limit = limitEl ? limitEl.value : '100';
         const renderData = limit === 'all' ? filtered : filtered.slice(0, parseInt(limit));
@@ -1656,14 +1671,13 @@
         const period = document.getElementById('sel-cat-period').value;
         const tagFilter = document.getElementById('sel-cat-tag').value;
         
-        // Populate tag dropdown options
         const allTags = new Set();
         db.forEach(t => { if(t.tags) t.tags.split(',').forEach(tag => allTags.add(tag.trim())); });
         const tagSel = document.getElementById('sel-cat-tag');
         const currTag = tagSel.value;
         tagSel.innerHTML = `<option value="">${currentLang==='he'?'כל התגיות':'All Tags'}</option>` + 
                            Array.from(allTags).filter(x=>x).map(tag => `<option value="${tag}">${tag}</option>`).join('');
-        tagSel.value = currTag; // restore
+        tagSel.value = currTag;
 
         let data = db.filter(t => t.cat === cat);
         
@@ -1708,7 +1722,6 @@
             options: { maintainAspectRatio: false }
         });
 
-        // NEW: Monthly Breakdown Table for the Category
         const sortedMonths = Object.keys(monthlyTrend).sort().reverse();
         const breakdownHtml = sortedMonths.map(m => `
             <tr>
@@ -1858,7 +1871,7 @@
                         type: type,
                         tags: tags
                     });
-                    currDate.setMonth(currDate.getMonth() + 1); // Advance exactly 1 month
+                    currDate.setMonth(currDate.getMonth() + 1);
                 }
             } else {
                 db.push({
@@ -1877,10 +1890,6 @@
         e.target.reset();
         document.getElementById('in-installments').value = 1;
         document.getElementById('in-date').valueAsDate = new Date();
-        renderJournal();
-        renderDashboard();
-        renderBudgetSettings();
-        renderStats();
         showToast(currentLang === 'he' ? 'התנועה נשמרה בהצלחה' : 'Transaction saved successfully');
     };
 
@@ -1888,7 +1897,6 @@
         if(confirm(currentLang === 'he' ? 'למחוק את התנועה?' : 'Delete transaction?')) {
             db = db.filter(t => String(t.id) !== String(id));
             saveData();
-            renderAll();
         }
     }
 
@@ -1900,7 +1908,7 @@
         document.getElementById('in-cat').value = tx.cat;
         document.getElementById('in-tags').value = tx.tags || '';
         editingId = id;
-        document.getElementById('group-installments').style.display = 'none'; // הסתרת תשלומים בעריכה
+        document.getElementById('group-installments').style.display = 'none';
         document.getElementById('btn-submit-tx').innerHTML = currentLang === 'he' ? 'עדכן תנועה' : 'Update Transaction';
         document.getElementById('nav-journal').click();
     }
@@ -1908,7 +1916,6 @@
     function renderGoals() {
         const container = document.getElementById('goals-list');
         
-        // Calculate average monthly savings over last 3 months
         const now = new Date();
         const last3Months = [];
         for(let i=0; i<3; i++) last3Months.push(new Date(now.getFullYear(), now.getMonth()-i, 1).toISOString().slice(0,7));
@@ -1959,7 +1966,6 @@
         if(name && target) {
             goals.push({ id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()), name, target, saved: 0 });
             saveData();
-            renderGoals();
             closeModal('goal-modal');
             confetti();
         }
@@ -1969,7 +1975,6 @@
         if(confirm(currentLang === 'he' ? 'למחוק את היעד?' : 'Delete goal?')) {
             goals = goals.filter(g => String(g.id) !== String(id));
             saveData();
-            renderGoals();
         }
     }
 
@@ -1979,7 +1984,6 @@
             const g = goals.find(x => String(x.id) === String(id));
             g.saved += parseFloat(amt);
             saveData();
-            renderGoals();
             if(g.saved >= g.target) {
                 confetti();
                 alert(currentLang === 'he' ? 'כל הכבוד! הגעת ליעד!' : 'Great job! You reached your goal!');
@@ -2003,7 +2007,6 @@
     function updateCatColor(idx, newColor) {
         cats[idx].color = newColor;
         saveData();
-        renderAll();
         showToast(currentLang === 'he' ? 'צבע קטגוריה עודכן' : 'Category color updated');
     }
 
@@ -2013,7 +2016,6 @@
         if(name && !cats.some(c => c.name === name)) {
             cats.push({ name, color });
             saveData();
-            renderAll();
             document.getElementById('new-cat-name').value = '';
             showToast(currentLang === 'he' ? 'קטגוריה נוספה' : 'Category added');
         }
@@ -2023,7 +2025,6 @@
         if(confirm(currentLang === 'he' ? 'למחוק את הקטגוריה? (פעולה זו לא תמחוק תנועות קיימות)' : 'Delete category? (Existing transactions will remain)')) {
             cats.splice(idx, 1);
             saveData();
-            renderAll();
         }
     }
 
@@ -2043,7 +2044,6 @@
         });
         saveData();
         showToast(currentLang === 'he' ? 'הגדרות תקציב נשמרו' : 'Budgets saved');
-        renderDashboard();
     }
 
     function renderSelects() {
@@ -2087,7 +2087,6 @@
         if(confirm(currentLang === 'he' ? 'פעולה זו תמחק את הנתונים הקיימים ותטען נתוני הדגמה. להמשיך?' : 'This will replace existing data with demo data. Continue?')) {
             injectDemoDataSilently();
             localStorage.setItem('profinance_demo_active', 'true');
-            location.reload();
         }
     }
 
@@ -2145,7 +2144,6 @@
         saveData();
     }
 
-    // --- RECURRING ENGINE UPDATED ---
     function runRecurringEngine() {
         const today = new Date();
         const currentMonth = today.toISOString().slice(0,7);
@@ -2177,8 +2175,6 @@
         if(count > 0) { 
             saveData(); 
             showToast(currentLang === 'he' ? `${count} הוראות קבע הוזנו אוטומטית` : `${count} recurring payments added automatically`); 
-            renderDashboard();
-            renderJournal();
         }
     }
 
@@ -2190,7 +2186,6 @@
         if(n && a && d) {
             recurring.push({ id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()), name: n, amount: a, day: d, cat: c });
             saveData();
-            renderSubs();
             closeModal('sub-modal');
             showToast(currentLang === 'he' ? 'הוראת קבע נוספה' : 'Recurring payment added');
         }
@@ -2212,7 +2207,7 @@
     }
 
     function deleteSub(id) {
-        if(confirm(currentLang === 'he' ? 'למחוק?' : 'Delete?')) { recurring = recurring.filter(x => String(x.id) !== String(id)); saveData(); renderSubs(); }
+        if(confirm(currentLang === 'he' ? 'למחוק?' : 'Delete?')) { recurring = recurring.filter(x => String(x.id) !== String(id)); saveData(); }
     }
 
     async function exportData() {
@@ -2257,15 +2252,18 @@
             budgets = data.budgets || {};
             dismissedAlerts = data.dismissedAlerts || [];
             saveData();
-            location.reload();
         };
         r.readAsText(file);
     }
 
     function hardReset() {
         if(confirm(currentLang === 'he' ? '⚠️ אזהרה: כל הנתונים יימחקו לצמיתות. להמשיך?' : '⚠️ WARNING: All data will be permanently deleted. Continue?')) {
-            localStorage.clear();
-            location.reload();
+            db = [];
+            recurring = [];
+            goals = [];
+            budgets = {};
+            dismissedAlerts = [];
+            saveData();
         }
     }
 
@@ -2291,13 +2289,11 @@
                 }
             });
             saveData();
-            renderAll();
             showToast(currentLang === 'he' ? 'ייבוא הושלם' : 'Import complete');
         };
         r.readAsArrayBuffer(input.files[0]);
     }
 
-    // --- AUTO-CATEGORIZATION LOGIC ---
     function autoCat(v) {
         if(!v) return;
         const val = v.trim();
@@ -2335,7 +2331,6 @@
     }
 
     function exportPDF() {
-        // 1. Collect all data to render in the report
         const income = db.filter(t => t.type==='income').reduce((a,b)=>a+b.amount,0);
         const expense = db.filter(t => t.type==='expense').reduce((a,b)=>a+b.amount,0);
         const balance = income - expense;
@@ -2347,7 +2342,6 @@
         const mExp = monthExp.reduce((a,b)=>a+b.amount,0);
         const mInc = monthInc.reduce((a,b)=>a+b.amount,0);
 
-        // 2. Build category breakdown for current month
         const catSums = {};
         monthExp.forEach(t => catSums[t.cat] = (catSums[t.cat]||0)+t.amount);
         const catRows = Object.entries(catSums)
@@ -2365,7 +2359,6 @@
                 </tr>`;
             }).join('');
 
-        // 3. Build last 10 transactions table
         const recentTx = [...db].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,10);
         const txRows = recentTx.map(t => `<tr>
             <td style="padding:8px; border-bottom:1px solid #eee;">${t.date}</td>
@@ -2374,7 +2367,6 @@
             <td style="padding:8px; border-bottom:1px solid #eee; font-weight:700; color:${t.type==='income'?'#10b981':'#ef4444'};">${t.type==='income'?'+':'−'}${t.amount.toLocaleString()} ₪</td>
         </tr>`).join('');
 
-        // 4. Build goals section
         const goalsHtml = goals.map(g => {
             const pct = Math.min(Math.round(g.saved/g.target*100),100);
             return `<div style="margin-bottom:12px;">
@@ -2388,7 +2380,6 @@
             </div>`;
         }).join('');
 
-        // 5. Build complete HTML report
         const reportDate = new Date().toLocaleDateString('he-IL', {year:'numeric', month:'long', day:'numeric'});
         const html = `<!DOCTYPE html>
 <html dir="rtl" lang="he">
@@ -2462,12 +2453,11 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.5 | הופק ב-${reportDate} | כל הנתונים נשמרים מקומית על המכשיר שלך
+  💎 Pro-Finance Diamond V3.5 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
 
-        // 6. Open in new window and trigger print dialog
         const win = window.open('', '_blank', 'width=900,height=700');
         if (!win) {
             showToast(currentLang === 'he' ? 'אפשר פתיחת חלונות קופצים בדפדפן' : 'Allow popups in your browser');
@@ -2479,7 +2469,6 @@ ${recentTx.length > 0 ? `<table>
         setTimeout(() => { win.print(); }, 500);
     }
 
-    // Ensure all external scripts are fully loaded before executing init
     window.addEventListener('load', init);
 </script>
 </body>
