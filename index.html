@@ -508,6 +508,19 @@
                         <button class="btn-primary" onclick="addNewCategory()">+</button>
                     </div>
                     <div id="cat-list" style="max-height:250px; overflow-y:auto; border:1px solid #eee; border-radius:8px;"></div>
+
+                    <div style="margin-top:15px; padding-top:15px; border-top:1px dashed #ddd;">
+                        <div style="font-size:0.82rem; font-weight:700; color:#6b7280; margin-bottom:8px;">
+                            <i class="fas fa-arrows-rotate"></i> תיקון סוג לתנועות קיימות
+                        </div>
+                        <div style="font-size:0.75rem; color:#9ca3af; margin-bottom:8px;">
+                            הופך את כל התנועות של קטגוריה נבחרת לסוג הנכון (למשל השקעות ← העברה במקום הוצאה).
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <select id="convert-cat-select" class="input-control" style="flex:1;"></select>
+                            <button class="btn-primary" style="background:var(--info); white-space:nowrap;" onclick="convertCategoryType()"><i class="fas fa-wand-magic-sparkles"></i> תקן סוג</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="card" id="api-key-card">
@@ -521,7 +534,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.7 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.9 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -712,6 +725,7 @@
         {name: 'משכורת', color: '#22c55e', isIncome: true}, 
         {name: 'הכנסה נוספת', color: '#84cc16', isIncome: true},
         {name: 'מוצרי חשמל', color: '#0ea5e9'},
+        {name: 'השקעות ושוק ההון', color: '#14b8a6', isTransfer: true},
         {name: 'אחר', color: '#94a3b8'}
     ];
     let budgets = {};
@@ -1034,16 +1048,27 @@
     function renderDashboard() {
         const income = db.filter(t => t.type==='income').reduce((a,b)=>a+b.amount,0);
         const expense = db.filter(t => t.type==='expense').reduce((a,b)=>a+b.amount,0);
+        const transferred = db.filter(t => t.type==='transfer').reduce((a,b)=>a+b.amount,0);
+        // יתרה = הכנסות פחות הוצאות בלבד. העברות (השקעות) לא נחשבות הוצאה — הכסף עבר לחיסכון.
         const bal = income - expense;
         
         animateVal('kpi-inc', income);
         animateVal('kpi-exp', expense);
         animateVal('kpi-bal', bal);
         
-        const savRate = income > 0 ? ((bal) / income * 100) : 0;
+        // שיעור החיסכון כולל גם את מה שהופנה להשקעות (זה חיסכון לכל דבר)
+        const totalSaved = (bal > 0 ? bal : 0) + transferred;
+        const savRate = income > 0 ? (totalSaved / income * 100) : 0;
         const savRateEl = document.getElementById('kpi-sav-rate');
         savRateEl.innerText = savRate.toFixed(1) + '%';
         savRateEl.style.color = savRate > 20 ? 'var(--success)' : (savRate >= 10 ? 'var(--warning)' : 'var(--danger)');
+        // הצגת סכום שהופנה להשקעות מתחת ליתרה
+        const balEl = document.getElementById('kpi-bal');
+        if (balEl && transferred > 0) {
+            let sub = balEl.parentElement.querySelector('.transfer-sub');
+            if (!sub) { sub = document.createElement('div'); sub.className='transfer-sub'; sub.style.cssText='font-size:0.75rem;color:var(--info);font-weight:700;margin-top:5px;'; balEl.parentElement.appendChild(sub); }
+            sub.innerText = (currentLang==='he'?'💰 הופנה להשקעות: ':'💰 To investments: ') + Math.round(transferred).toLocaleString() + ' ₪';
+        }
 
         const today = new Date();
         const thisMonth = today.toISOString().slice(0,7);
@@ -1164,12 +1189,13 @@
         const monthData = db.filter(t => t.date.startsWith(thisMonth));
         const mInc = monthData.filter(t => t.type === 'income').reduce((a,b)=>a+b.amount, 0);
         const mExp = monthData.filter(t => t.type === 'expense').reduce((a,b)=>a+b.amount, 0);
+        const mTransfer = monthData.filter(t => t.type === 'transfer').reduce((a,b)=>a+b.amount, 0);
 
         let finalScore = 0;
         let pSavings = 0, pBudget = 0, pStability = 0, pFixed = 0;
 
         if (mInc > 0 || mExp > 0) {
-            let savRate = mInc > 0 ? ((mInc - mExp) / mInc) * 100 : -100;
+            let savRate = mInc > 0 ? ((mInc - mExp + mTransfer) / mInc) * 100 : -100;
             if (savRate > 20) pSavings = 100;
             else if (savRate > 10) pSavings = 80;
             else if (savRate > 5) pSavings = 60;
@@ -1633,10 +1659,11 @@
         const data = db.filter(t => t.date.startsWith(month));
         const inc = data.filter(t => t.type==='income').reduce((a,b)=>a+b.amount,0);
         const exp = data.filter(t => t.type==='expense').reduce((a,b)=>a+b.amount,0);
+        const trans = data.filter(t => t.type==='transfer').reduce((a,b)=>a+b.amount,0);
         
         document.getElementById('monthIncVal').innerText = inc.toLocaleString() + ' ₪';
         document.getElementById('monthExpVal').innerText = exp.toLocaleString() + ' ₪';
-        document.getElementById('monthBalVal').innerText = (inc - exp).toLocaleString() + ' ₪';
+        document.getElementById('monthBalVal').innerText = (inc - exp).toLocaleString() + ' ₪' + (trans>0 ? ` (+${Math.round(trans).toLocaleString()} להשקעות)` : '');
         
         const daysInMonth = new Date(month.slice(0,4), month.slice(5,7), 0).getDate();
         document.getElementById('monthAvgDaily').innerText = Math.round(exp / daysInMonth).toLocaleString() + ' ₪';
@@ -1853,26 +1880,60 @@
 
     function renderForecast() {
         const now = new Date();
-        const last3Months = [];
-        for(let i=1; i<=3; i++) {
-            const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-            last3Months.push(d.toISOString().slice(0,7));
+
+        // --- כמה חודשי היסטוריה יש בפועל (עד 6 אחרונים, לא כולל החודש הנוכחי) ---
+        const histMonths = [];
+        for (let i = 1; i <= 6; i++) {
+            histMonths.push(new Date(now.getFullYear(), now.getMonth()-i, 1).toISOString().slice(0,7));
         }
+        const monthsWithData = histMonths.filter(m => db.some(t => t.date.slice(0,7) === m));
+        const nMonths = monthsWithData.length || 1;   // תיקון: חלוקה במספר החודשים בפועל, לא ב-3 קבוע
 
+        const histData = db.filter(t => monthsWithData.includes(t.date.slice(0,7)));
+
+        // --- סינון הוצאות חד-פעמיות חריגות (משתמש בזיהוי הקיים) ---
+        const anomalyDescs = (globalSmartMetrics.anomalies || []).map(a => a.desc);
+
+        // --- הפרדה: הוצאות קבועות (הוראת קבע) נכנסות ב-100%, משתנות בממוצע ---
+        const recurringMonthly = recurring.reduce((a, r) => a + parseFloat(r.amount || 0), 0);
+        const recurringCatSum = {};
+        recurring.forEach(r => { recurringCatSum[r.cat] = (recurringCatSum[r.cat] || 0) + parseFloat(r.amount || 0); });
+
+        const variableAvg = {};
+        cats.forEach(c => variableAvg[c.name] = 0);
+        histData.filter(t => t.type === 'expense').forEach(t => {
+            const isFixed = (t.tags && t.tags.includes('הוראת קבע')) || t.desc.startsWith('🔄');
+            const isOneOff = anomalyDescs.includes(t.desc);
+            if (isFixed || isOneOff) return;   // קבועות מטופלות בנפרד, חד-פעמיות לא נכנסות לתחזית
+            variableAvg[t.cat] = (variableAvg[t.cat] || 0) + (t.amount / nMonths);
+        });
+
+        // תחזית לכל קטגוריה = ממוצע משתנה + חלק קבוע קבוע
         const monthlyAvg = {};
-        cats.forEach(c => monthlyAvg[c.name] = 0);
-
-        const data3Months = db.filter(t => last3Months.includes(t.date.slice(0,7)));
-        data3Months.filter(t => t.type === 'expense').forEach(t => {
-            monthlyAvg[t.cat] = (monthlyAvg[t.cat] || 0) + (t.amount / 3);
+        cats.forEach(c => {
+            monthlyAvg[c.name] = (variableAvg[c.name] || 0) + (recurringCatSum[c.name] || 0);
         });
 
         const fcExp = Object.values(monthlyAvg).reduce((a,b)=>a+b, 0);
-        const fcInc = data3Months.filter(t => t.type === 'income').reduce((a,b)=>a+b.amount, 0) / 3;
+
+        // הכנסה: ממוצע לפי חודשים בפועל, בלי הכנסות חד-פעמיות חריגות
+        const incomeVals = histData.filter(t => t.type === 'income' && !anomalyDescs.includes(t.desc));
+        const fcInc = incomeVals.reduce((a,b)=>a+b.amount, 0) / nMonths;
 
         document.getElementById('fc-inc').innerText = Math.round(fcInc).toLocaleString() + ' ₪';
         document.getElementById('fc-exp').innerText = Math.round(fcExp).toLocaleString() + ' ₪';
         document.getElementById('fc-bal').innerText = Math.round(fcInc - fcExp).toLocaleString() + ' ₪';
+
+        // --- הערת מהימנות לפי כמות ההיסטוריה ---
+        const fcDetailEl = document.querySelector('#tab-forecast [data-i18n="fcDetail"]');
+        if (fcDetailEl) {
+            let conf, color;
+            if (nMonths >= 3) { conf = currentLang==='he'?`מהימנות גבוהה (${nMonths} חודשי היסטוריה)`:`High confidence (${nMonths}m history)`; color='var(--success)'; }
+            else if (nMonths === 2) { conf = currentLang==='he'?'מהימנות בינונית (2 חודשים בלבד)':'Medium confidence (2m only)'; color='var(--warning)'; }
+            else { conf = currentLang==='he'?'מהימנות נמוכה — היסטוריה של חודש בלבד':'Low confidence — 1m history only'; color='var(--danger)'; }
+            fcDetailEl.innerHTML = (currentLang==='he'?'ניתוח תחזית חכמה':'Smart Forecast Analysis') +
+                ` <span style="font-size:0.75rem; font-weight:600; color:${color};">· ${conf}</span>`;
+        }
 
         if(charts.fore) charts.fore.destroy();
         const activeCats = Object.keys(monthlyAvg).filter(k => monthlyAvg[k] > 0);
@@ -1894,7 +1955,6 @@
             }
         });
     }
-
     function renderScenario() {
         const monthlySave = parseFloat(document.getElementById('scen-monthly').value) || 0;
         const annualRate = parseFloat(document.getElementById('scen-rate').value) || 0;
@@ -1939,7 +1999,7 @@
         e.preventDefault();
         const amount = parseFloat(document.getElementById('in-amount').value);
         const cat = document.getElementById('in-cat').value;
-        const type = isIncomeCat(cat) ? 'income' : 'expense';
+        const type = getTxType(cat);
         const tags = document.getElementById('in-tags').value.trim();
         const installments = parseInt(document.getElementById('in-installments').value) || 1;
         const baseDate = document.getElementById('in-date').value;
@@ -2090,7 +2150,40 @@
         }
     }
 
+    // הופך את כל התנועות של קטגוריה נבחרת לסוג הנכון לפי הגדרת הקטגוריה
+    function convertCategoryType() {
+        const catName = document.getElementById('convert-cat-select').value;
+        if (!catName) return;
+        const targetType = getTxType(catName);
+        const affected = db.filter(t => t.cat === catName && t.type !== targetType);
+        if (affected.length === 0) {
+            showToast(currentLang==='he' ? `כל התנועות של "${catName}" כבר בסוג הנכון` : 'All transactions already correct');
+            return;
+        }
+        const typeLabel = targetType==='transfer' ? 'העברה (השקעה/חיסכון)' : (targetType==='income' ? 'הכנסה' : 'הוצאה');
+        const msg = currentLang==='he'
+            ? `להמיר ${affected.length} תנועות בקטגוריה "${catName}" לסוג "${typeLabel}"?\n\nזה ישפיע על היתרה, שיעור החיסכון והגרפים היסטורית. ניתן לגבות קודם דרך "ייצוא גיבוי".`
+            : `Convert ${affected.length} transactions in "${catName}" to "${typeLabel}"?`;
+        if (!confirm(msg)) return;
+        let count = 0;
+        db.forEach(t => { if (t.cat === catName && t.type !== targetType) { t.type = targetType; count++; } });
+        saveData();
+        renderAll();
+        showToast(currentLang==='he' ? `הומרו ${count} תנועות בהצלחה` : `Converted ${count} transactions`);
+    }
+
     function renderCatManager() {
+        // מילוי בורר הקטגוריות לתיקון סוג
+        const convSel = document.getElementById('convert-cat-select');
+        if (convSel) {
+            const cur = convSel.value;
+            convSel.innerHTML = cats.map(c => {
+                const t = getTxType(c.name);
+                const label = t==='transfer' ? 'העברה' : (t==='income' ? 'הכנסה' : 'הוצאה');
+                return `<option value="${c.name}">${c.name} — ${label}</option>`;
+            }).join('');
+            if (cur) convSel.value = cur;
+        }
         const container = document.getElementById('cat-list');
         container.innerHTML = cats.map((c, i) => `
             <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
@@ -2156,12 +2249,24 @@
         });
     }
 
-    // מקור אמת יחיד לזיהוי קטגוריית הכנסה (תיקון: לא ניחוש לפי שם קשיח)
+    // מקור אמת יחיד לזיהוי סוג קטגוריה (הכנסה / הוצאה / העברה)
     const INCOME_CATS = ['משכורת', 'הכנסה נוספת'];
+    const TRANSFER_CATS = ['השקעות ושוק ההון'];
     function isIncomeCat(catName) {
         const c = cats.find(x => x.name === catName);
         if (c && typeof c.isIncome === 'boolean') return c.isIncome;
         return INCOME_CATS.includes(catName);
+    }
+    function isTransferCat(catName) {
+        const c = cats.find(x => x.name === catName);
+        if (c && typeof c.isTransfer === 'boolean') return c.isTransfer;
+        return TRANSFER_CATS.includes(catName);
+    }
+    // מחזיר את סוג התנועה: 'transfer' (השקעה/חיסכון), 'income', או 'expense'
+    function getTxType(catName) {
+        if (isTransferCat(catName)) return 'transfer';
+        if (isIncomeCat(catName)) return 'income';
+        return 'expense';
     }
 
     function getCatColor(n) { const c = cats.find(x => x.name === n); return c ? c.color : '#94a3b8'; }
@@ -2281,7 +2386,7 @@
                     amount: parseFloat(s.amount),
                     cat: s.cat,
                     tags: 'הוראת קבע',
-                    type: isIncomeCat(s.cat) ? 'income' : 'expense'
+                    type: getTxType(s.cat)
                 });
                 count++;
             }
@@ -2327,7 +2432,7 @@
 
     async function exportData() {
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets, dismissedAlerts}, null, 2);
-        const fileName = `pro_finance_diamond_v3.7_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const fileName = `pro_finance_diamond_v3.9_backup_${new Date().toISOString().slice(0,10)}.json`;
 
         if ('showSaveFilePicker' in window) {
             try {
@@ -2439,6 +2544,11 @@
     let pendingImport = [];
 
     function detectCatSmart(bankCat, merchant) {
+        // קודם כל: למידה מההיסטוריה — אם סיווגת בעבר בית עסק זהה, השתמש באותו סיווג
+        if (typeof learnCategoryFromHistory === 'function') {
+            const learned = learnCategoryFromHistory(merchant || '');
+            if (learned) return learned;
+        }
         const bc = (bankCat || '').trim();
         if (bc && bankCatMap[bc] && cats.find(c => c.name === bankCatMap[bc])) return bankCatMap[bc];
         const txt = ((merchant || '') + ' ' + bc).toLowerCase();
@@ -2617,6 +2727,22 @@
     }
 
 
+    // לומד מרשומות קיימות: מחפש עסקה דומה בהיסטוריה ומשתמש בסיווג שכבר בחרת
+    function learnCategoryFromHistory(desc) {
+        const q = desc.trim().toLowerCase();
+        if (q.length < 2) return null;
+        // מהחדש לישן — כדי לתפוס את הבחירה העדכנית ביותר
+        const sorted = [...db].sort((a,b) => new Date(b.date) - new Date(a.date));
+        // 1) התאמה מדויקת של תיאור
+        let hit = sorted.find(t => t.desc && t.desc.trim().toLowerCase() === q);
+        // 2) אחרת: התיאור הקיים מוכל בקלט או להפך (למשל "שופרסל" מול "שופרסל דיל")
+        if (!hit) hit = sorted.find(t => {
+            const d = (t.desc||'').trim().toLowerCase();
+            return d.length >= 3 && (q.includes(d) || d.includes(q));
+        });
+        return hit && cats.find(c => c.name === hit.cat) ? hit.cat : null;
+    }
+
     function autoCat(v) {
         if(!v) return;
         const val = v.trim();
@@ -2626,6 +2752,14 @@
         
         let detected = false;
 
+        // שלב 0: למידה מההיסטוריה שלך — קודם כל בדוק איך סיווגת עסקה דומה בעבר
+        const learned = learnCategoryFromHistory(val);
+        if (learned) {
+            catSelect.value = learned;
+            detected = true;
+        }
+
+        if (!detected)
         for (const [catName, keywords] of Object.entries(categoryKeywords)) {
             const activeCat = cats.find(c => c.name === catName);
             if (activeCat) {
@@ -2776,7 +2910,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.7 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.9 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
