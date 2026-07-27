@@ -534,7 +534,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.9 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.10 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -1663,7 +1663,21 @@
         
         document.getElementById('monthIncVal').innerText = inc.toLocaleString() + ' ₪';
         document.getElementById('monthExpVal').innerText = exp.toLocaleString() + ' ₪';
-        document.getElementById('monthBalVal').innerText = (inc - exp).toLocaleString() + ' ₪' + (trans>0 ? ` (+${Math.round(trans).toLocaleString()} להשקעות)` : '');
+        // יתרה נקייה + הערת השקעות כשורת-משנה נפרדת מתחת (כדי שלא תשבור את הכרטיס)
+        const balValEl = document.getElementById('monthBalVal');
+        balValEl.innerText = (inc - exp).toLocaleString() + ' ₪';
+        let balSub = balValEl.parentElement.querySelector('.month-transfer-sub');
+        if (trans > 0) {
+            if (!balSub) {
+                balSub = document.createElement('div');
+                balSub.className = 'month-transfer-sub';
+                balSub.style.cssText = 'font-size:0.72rem; color:var(--info); font-weight:700; margin-top:6px; white-space:nowrap;';
+                balValEl.parentElement.appendChild(balSub);
+            }
+            balSub.innerText = (currentLang==='he' ? '💰 הופנה להשקעות: ' : '💰 To investments: ') + Math.round(trans).toLocaleString() + ' ₪';
+        } else if (balSub) {
+            balSub.remove();
+        }
         
         const daysInMonth = new Date(month.slice(0,4), month.slice(5,7), 0).getDate();
         document.getElementById('monthAvgDaily').innerText = Math.round(exp / daysInMonth).toLocaleString() + ' ₪';
@@ -2432,7 +2446,7 @@
 
     async function exportData() {
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets, dismissedAlerts}, null, 2);
-        const fileName = `pro_finance_diamond_v3.9_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const fileName = `pro_finance_diamond_v3.10_backup_${new Date().toISOString().slice(0,10)}.json`;
 
         if ('showSaveFilePicker' in window) {
             try {
@@ -2910,7 +2924,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.9 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.10 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
