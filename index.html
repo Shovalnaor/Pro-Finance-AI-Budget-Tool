@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <title>PRO-FINANCE DIAMOND V3.12 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.14 + AI Intelligence</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
@@ -234,12 +234,14 @@
             <div class="card-grid">
                 <div class="kpi-card" style="border-top-color:var(--success);"><h3 data-i18n="kpiInc">הכנסות מצטברות</h3><div class="value text-success" id="kpi-inc">0</div></div>
                 <div class="kpi-card" style="border-top-color:var(--danger);"><h3 data-i18n="kpiExp">הוצאות מצטברות</h3><div class="value text-danger" id="kpi-exp">0</div></div>
-                <div class="kpi-card" style="border-top-color:var(--info);"><h3 data-i18n="kpiBal">יתרה נוכחית (מזומן)</h3><div class="value" id="kpi-bal">0</div></div>
+                <div class="kpi-card" style="border-top-color:var(--info);"><h3 data-i18n="kpiBal">יתרה נוכחית</h3><div class="value" id="kpi-bal">0</div></div>
+                <div class="kpi-card" style="border-top-color:#14b8a6;"><h3 data-i18n="kpiInvested">הופנה להשקעות (חיסכון)</h3><div class="value" id="kpi-invested">0</div><div id="kpi-invested-sub" style="font-size:0.75rem; font-weight:700; margin-top:6px;"></div></div>
             </div>
 
             <div class="card-grid">
-                <div class="kpi-card" style="border-top-color:#8b5cf6;"><h3 data-i18n="kpiSavRate">שיעור חיסכון כולל</h3><div class="value" id="kpi-sav-rate">0%</div></div>
-                <div class="kpi-card" style="border-top-color:#f59e0b;"><h3 data-i18n="kpiBurn">חיזוי הוצאה לסוף החודש</h3><div class="value" style="font-size:1.4rem; margin-top:15px;" id="kpi-burn">מחשב...</div><div id="kpi-burn-sub" style="font-size:0.8rem; color:#6b7280; font-weight:bold; margin-top:5px;"></div></div>
+                <div class="kpi-card" style="border-top-color:#8b5cf6;"><h3 data-i18n="kpiSavRate">שיעור חיסכון כולל</h3><div class="value" id="kpi-sav-rate">0%</div><div id="kpi-sav-rate-sub" style="font-size:0.75rem; color:#6b7280; font-weight:700; margin-top:6px;"></div></div>
+                <div class="kpi-card" style="border-top-color:#22c55e;"><h3 data-i18n="kpiAvgInc">ממוצע הכנסות חודשי</h3><div class="value" id="kpi-avg-inc">0 ₪</div><div id="kpi-avg-inc-sub" style="font-size:0.75rem; color:#6b7280; font-weight:700; margin-top:6px;"></div></div>
+                <div class="kpi-card" style="border-top-color:#f59e0b;"><h3 data-i18n="kpiAvgExp">ממוצע הוצאות חודשי</h3><div class="value" id="kpi-avg-exp">0 ₪</div><div id="kpi-avg-exp-sub" style="font-size:0.75rem; color:#6b7280; font-weight:700; margin-top:6px;"></div></div>
                 <div class="kpi-card" style="border-top-color:#06b6d4;"><h3 data-i18n="kpiMom">השוואה לחודש קודם (הוצאות)</h3><div class="value" id="kpi-mom">0%</div></div>
             </div>
 
@@ -534,7 +536,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.12 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.14 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -900,7 +902,7 @@
     const translations = {
         he: {
             navDash: "📊 מבט על", navJournal: "📝 יומן", navMonthly: "📅 חודשי", navCat: "🔍 קטגוריות", navGoals: "🎯 יעדים", navForecast: "🔮 תחזית", navScenario: "💡 סימולטור", navRecurring: "🔄 קבע", navSettings: "⚙️ הגדרות", navAbout: "ℹ️ אודות",
-            healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית (מזומן)", kpiSavRate: "שיעור חיסכון כולל", kpiBurn: "חיזוי הוצאה לסוף החודש", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", trendTitle: "מגמת הכנסות מול הוצאות", waterfallTitle: "זרימת כספים (Waterfall)", heatmapTitle: "מפת חום - הוצאות שבועיות (החודש)",
+            healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", kpiInvested: "הופנה להשקעות (חיסכון)", kpiSavRate: "שיעור חיסכון כולל", kpiAvgInc: "ממוצע הכנסות חודשי", kpiAvgExp: "ממוצע הוצאות חודשי", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", trendTitle: "מגמת הכנסות מול הוצאות", waterfallTitle: "זרימת כספים (Waterfall)", heatmapTitle: "מפת חום - הוצאות שבועיות (החודש)",
             aiHeading: "🤖 סוכן אסטרטגיה פיננסית", aiDesc1: "ה-AI ינתח את ההוצאות שלך ויגיד לך את האמת על הניהול הכספי שלך. <strong>הוא מונחה לא להגיד לך מה שאתה רוצה לשמוע</strong>, אלא לבקר בצורה אובייקטיבית וישירה את ההוצאות המיותרות ולתת פתרונות אמיתיים בהתבסס על מודל החיזוי והמדדים הפיננסיים שהמערכת חישבה.", aiBtn: "✨ נתח את התיק הפיננסי שלי מול התחזיות", aiLoading: "משלב נתוני חיזוי למודל LLM אובייקטיבי, נא להמתין...",
             autoCatBadge: "✨ זוהה אוטומטית", addTxTitle: "<i class='fas fa-edit'></i> הוספת תנועה", lblDate: "תאריך", lblDesc: "תיאור העסקה", descPlaceholder: "לדוגמה: ירח דבש בתאילנד...", lblAmount: "סכום", lblCat: "קטגוריה", lblTags: "תגיות (מופרדות בפסיק)", lblInstallments: "תשלומים", btnAdd: "הוסף למערכת", journalTitle: "יומן תנועות מלא", searchPlaceholder: "חיפוש...", opt100: "100 אחרונות", opt500: "500 אחרונות", optAll: "הצג הכל", btnImportExcel: "<i class='fas fa-file-import'></i> ייבוא", thDate: "תאריך", thDesc: "תיאור", thTags: "תגיות", thCat: "קטגוריה", thAmount: "סכום", thActions: "פעולות",
             monthlyDetailTitle: "ניתוח חודשי מפורט", monthInc: "הכנסות", monthExp: "הוצאות", monthBal: "יתרה", monthInvested: "הופנה להשקעות (חיסכון)", chartDaily: "פילוח לפי ימים", chartCat: "פילוח קטגוריות",
@@ -921,7 +923,7 @@
         },
         en: {
             navDash: "📊 Dashboard", navJournal: "📝 Journal", navMonthly: "📅 Monthly", navCat: "🔍 Categories", navGoals: "🎯 Goals", navForecast: "🔮 Forecast", navScenario: "💡 Scenario", navRecurring: "🔄 Recurring", navSettings: "⚙️ Settings", navAbout: "ℹ️ About",
-            healthTitle: "Financial Health", analyzing: "Analyzing...", kpiInc: "Total Income", kpiExp: "Total Expenses", kpiBal: "Current Balance (Cash)", kpiSavRate: "Total Savings Rate", kpiBurn: "Predicted End of Month Spend", kpiMom: "MoM Expense Comparison", budgetStatus: "Monthly Budget Status", trendTitle: "Income vs Expenses Trend", waterfallTitle: "Cash Flow (Waterfall)", heatmapTitle: "Weekly Expense Heatmap (This Month)",
+            healthTitle: "Financial Health", analyzing: "Analyzing...", kpiInc: "Total Income", kpiExp: "Total Expenses", kpiBal: "Current Balance", kpiInvested: "To Investments (Saved)", kpiSavRate: "Total Savings Rate", kpiAvgInc: "Avg Monthly Income", kpiAvgExp: "Avg Monthly Expenses", kpiMom: "MoM Expense Comparison", budgetStatus: "Monthly Budget Status", trendTitle: "Income vs Expenses Trend", waterfallTitle: "Cash Flow (Waterfall)", heatmapTitle: "Weekly Expense Heatmap (This Month)",
             aiHeading: "🤖 Financial Strategy Agent", aiDesc1: "The AI will analyze your spending and tell you the truth about your financial management. <strong>It is instructed NOT to tell you what you want to hear</strong>, but to objectively and directly criticize unnecessary expenses and provide real solutions.", aiBtn: "✨ Analyze My Financial Portfolio vs Predictions", aiLoading: "Integrating prediction data to objective LLM model, please wait...",
             autoCatBadge: "✨ Auto-Detected", addTxTitle: "<i class='fas fa-edit'></i> Add Transaction", lblDate: "Date", lblDesc: "Description", descPlaceholder: "e.g., Honeymoon in Thailand...", lblAmount: "Amount", lblCat: "Category", lblTags: "Tags (Comma separated)", lblInstallments: "Installments", btnAdd: "Add to System", journalTitle: "Transaction Journal", searchPlaceholder: "Search...", opt100: "Last 100", opt500: "Last 500", optAll: "Show All", btnImportExcel: "<i class='fas fa-file-import'></i> Import", thDate: "Date", thDesc: "Description", thTags: "Tags", thCat: "Category", thAmount: "Amount", thActions: "Actions",
             monthlyDetailTitle: "Detailed Monthly Analysis", monthInc: "Income", monthExp: "Expenses", monthBal: "Balance", monthInvested: "To Investments (Saved)", chartDaily: "Daily Breakdown", chartCat: "Category Breakdown",
@@ -1093,14 +1095,16 @@
         animateVal('kpi-exp', expense);
         animateVal('kpi-bal', bal);
 
-        // שיעור חיסכון = (הכנסות − הוצאות) / הכנסות.
-        // ההעברות להשקעות אינן נספרות כהוצאה מלכתחילה — הוספתן שוב היא ספירה כפולה.
-        const savRate = income > 0 ? ((income - expense) / income * 100) : 0;
+        // שיעור חיסכון = כמה מההכנסות המצטברות הופנו בפועל להשקעות/חיסכון.
+        const savRate = income > 0 ? (transferred / income * 100) : 0;
         const savRateEl = document.getElementById('kpi-sav-rate');
         savRateEl.innerText = savRate.toFixed(1) + '%';
         savRateEl.style.color = savRate > 20 ? 'var(--success)' : (savRate >= 10 ? 'var(--warning)' : 'var(--danger)');
+        const savRateSubEl = document.getElementById('kpi-sav-rate-sub');
+        if (savRateSubEl) savRateSubEl.innerText = currentLang === 'he'
+            ? 'הופנה להשקעות מתוך ההכנסות' : 'Invested out of total income';
 
-        // שורות משנה מתחת ליתרה: כמה הופנה להשקעות וכמה באמת נחסך
+        // שורת משנה מתחת ליתרה: סך מה שנחסך בפועל (הכנסות פחות הוצאות)
         const balEl = document.getElementById('kpi-bal');
         if (balEl) {
             balEl.style.color = bal >= 0 ? '' : 'var(--danger)';
@@ -1109,14 +1113,29 @@
                 if (!sub) {
                     sub = document.createElement('div');
                     sub.className = 'transfer-sub';
-                    sub.style.cssText = 'font-size:0.75rem; font-weight:700; margin-top:6px; line-height:1.7;';
+                    sub.style.cssText = 'font-size:0.75rem; font-weight:700; margin-top:6px; color:var(--success);';
                     balEl.parentElement.appendChild(sub);
                 }
-                sub.innerHTML =
-                    `<div style="color:var(--info);">💰 ${currentLang==='he'?'הופנה להשקעות':'To investments'}: ${Math.round(transferred).toLocaleString()} ₪</div>` +
-                    `<div style="color:var(--success);">🐖 ${currentLang==='he'?'סה"כ נחסך':'Total saved'}: ${Math.round(income - expense).toLocaleString()} ₪</div>`;
+                sub.innerText = `🐖 ${currentLang==='he'?'סה"כ נחסך':'Total saved'}: ${Math.round(income - expense).toLocaleString()} ₪`;
             } else if (sub) {
                 sub.remove();
+            }
+        }
+
+        // כרטיס "הופנה להשקעות (חיסכון)" — סך ההעברות המצטבר
+        const investedElD = document.getElementById('kpi-invested');
+        const investedSubD = document.getElementById('kpi-invested-sub');
+        if (investedElD) {
+            investedElD.innerText = Math.round(transferred).toLocaleString() + ' ₪';
+            investedElD.style.color = transferred > 0 ? '#14b8a6' : '';
+        }
+        if (investedSubD) {
+            if (transferred > 0 && income > 0) {
+                const pctIncD = (transferred / income * 100).toFixed(1);
+                investedSubD.innerText = (currentLang==='he' ? `${pctIncD}% מסך ההכנסות` : `${pctIncD}% of total income`);
+                investedSubD.style.color = '#6b7280';
+            } else {
+                investedSubD.innerText = '';
             }
         }
 
@@ -1124,25 +1143,30 @@
         const thisMonth = today.toISOString().slice(0,7);
         const monthExp = db.filter(t => t.type==='expense' && t.date.startsWith(thisMonth)).reduce((a,b)=>a+b.amount,0);
 
-        const prediction = calculatePrediction(thisMonth);
-        const burnEl = document.getElementById('kpi-burn');
-        const burnSubEl = document.getElementById('kpi-burn-sub');
-        const totalBudget = Object.values(budgets).reduce((a,b)=>a+b, 0);
+        // מריץ את מודל החיזוי כדי שה-AI Advisor ימשיך לקבל את המדדים, גם בלי כרטיס ייעודי
+        calculatePrediction(thisMonth);
 
-        burnEl.innerText = Math.round(prediction.predictedTotalSpend).toLocaleString() + ' ₪';
-        if (totalBudget > 0) {
-            if (prediction.predictedTotalSpend > totalBudget) {
-                burnEl.style.color = 'var(--danger)';
-                burnSubEl.innerText = currentLang === 'he' ? `צפי לחריגה של ${Math.round(prediction.predictedTotalSpend - totalBudget).toLocaleString()} ₪` : `Expected overrun of ${Math.round(prediction.predictedTotalSpend - totalBudget).toLocaleString()}`;
-                burnSubEl.style.color = 'var(--danger)';
-            } else {
-                burnEl.style.color = 'var(--success)';
-                burnSubEl.innerText = currentLang === 'he' ? 'צפי עמידה בתקציב' : 'Expected to stay in budget';
-                burnSubEl.style.color = 'var(--success)';
-            }
-        } else {
-            burnSubEl.innerText = currentLang === 'he' ? `הוצאה יומית (משתנה): ${Math.round(prediction.dailyVariableRate)} ₪` : `Daily Var. Spend: ${Math.round(prediction.dailyVariableRate)}`;
+        // ===== ממוצעים חודשיים מ-AVG_START_MONTH ואילך =====
+        const avg = calcMonthlyAverages();
+        const avgNote = avg.months > 0
+            ? (currentLang === 'he' ? `ע"פ ${avg.months} חודשים מ-${AVG_START_LABEL}` : `Over ${avg.months} months since ${AVG_START_LABEL}`)
+            : (currentLang === 'he' ? 'אין נתונים בתקופה' : 'No data in range');
+
+        const avgIncEl = document.getElementById('kpi-avg-inc');
+        const avgIncSub = document.getElementById('kpi-avg-inc-sub');
+        if (avgIncEl) {
+            avgIncEl.innerText = Math.round(avg.avgIncome).toLocaleString() + ' ₪';
+            avgIncEl.style.color = 'var(--success)';
         }
+        if (avgIncSub) avgIncSub.innerText = avgNote;
+
+        const avgExpEl = document.getElementById('kpi-avg-exp');
+        const avgExpSub = document.getElementById('kpi-avg-exp-sub');
+        if (avgExpEl) {
+            avgExpEl.innerText = Math.round(avg.avgExpense).toLocaleString() + ' ₪';
+            avgExpEl.style.color = 'var(--danger)';
+        }
+        if (avgExpSub) avgExpSub.innerText = avgNote;
 
         const lastMonth = new Date(today.getFullYear(), today.getMonth()-1, 1).toISOString().slice(0,7);
         const lastMonthExp = db.filter(t => t.type==='expense' && t.date.startsWith(lastMonth)).reduce((a,b)=>a+b.amount,0);
@@ -1189,6 +1213,19 @@
                el.innerText = Math.round(current).toLocaleString() + ' ₪';
             }
         }, 30);
+    }
+
+    // ===== ממוצעים חודשיים: מחושבים מ-AVG_START_MONTH ואילך =====
+    const AVG_START_MONTH = '2025-11';
+    const AVG_START_LABEL = '11/2025';
+    function calcMonthlyAverages() {
+        const inRange = db.filter(t => t.date && t.date.slice(0,7) >= AVG_START_MONTH);
+        const months = [...new Set(inRange.map(t => t.date.slice(0,7)))];
+        const n = months.length;
+        if (n === 0) return { avgIncome: 0, avgExpense: 0, months: 0 };
+        const totInc = inRange.filter(t => t.type === 'income').reduce((a,b)=>a+b.amount, 0);
+        const totExp = inRange.filter(t => t.type === 'expense').reduce((a,b)=>a+b.amount, 0);
+        return { avgIncome: totInc / n, avgExpense: totExp / n, months: n };
     }
 
     function renderStats() {
@@ -2530,7 +2567,7 @@
 
     async function exportData() {
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets, dismissedAlerts}, null, 2);
-        const fileName = `pro_finance_diamond_v3.12_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const fileName = `pro_finance_diamond_v3.14_backup_${new Date().toISOString().slice(0,10)}.json`;
 
         if ('showSaveFilePicker' in window) {
             try {
@@ -3015,7 +3052,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.12 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.14 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
