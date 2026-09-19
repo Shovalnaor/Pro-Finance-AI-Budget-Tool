@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <title>PRO-FINANCE DIAMOND V3.15 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.16 + AI Intelligence</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
@@ -484,7 +484,7 @@
                         <h2 style="margin:0;" data-i18n="recTitle">הוראות קבע ותשלומים קבועים</h2>
                         <p style="color:#6b7280; margin:5px 0;" data-i18n="recDesc">המערכת תזין תנועות אלו אוטומטית בכל חודש</p>
                     </div>
-                    <button class="btn-primary" onclick="openModal('sub-modal')" data-i18n="btnNewRec"><i class="fas fa-plus"></i> הוראה חדשה</button>
+                    <button class="btn-primary" onclick="openSubModal()" data-i18n="btnNewRec"><i class="fas fa-plus"></i> הוראה חדשה</button>
                 </div>
                 <div id="subs-list"></div>
             </div>
@@ -536,7 +536,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.15 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.16 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -626,14 +626,14 @@
 
     <div id="sub-modal" class="modal-overlay">
         <div class="modal-box">
-            <h3 data-i18n="modRecTitle">הוספת הוראת קבע</h3>
+            <h3 id="sub-modal-title" data-i18n="modRecTitle">הוספת הוראת קבע</h3>
             <div class="input-group"><label data-i18n="modRecName">שם הספק (לדוגמה: ארנונה)</label><input id="sub-name" class="input-control"></div>
             <div class="input-group"><label data-i18n="modRecAmount">סכום חודשי</label><input type="number" id="sub-amount" class="input-control"></div>
             <div class="input-group"><label data-i18n="modRecDay">יום בחודש (1-31)</label><input type="number" id="sub-day" class="input-control" max="31" min="1"></div>
             <div class="input-group"><label data-i18n="modRecCat">קטגוריה</label><select id="sub-cat" class="input-control"></select></div>
             <div style="display:flex; gap:10px; margin-top:25px;">
-                <button class="btn-primary" style="flex:1;" onclick="addSubscription()" data-i18n="modBtnSave">שמור</button>
-                <button class="btn-primary" style="flex:1; background:#f3f4f6; color:#333;" onclick="closeModal('sub-modal')" data-i18n="modBtnCancel">ביטול</button>
+                <button class="btn-primary" style="flex:1;" id="sub-modal-save" onclick="addSubscription()" data-i18n="modBtnSave">שמור</button>
+                <button class="btn-primary" style="flex:1; background:#f3f4f6; color:#333;" onclick="closeSubModal()" data-i18n="modBtnCancel">ביטול</button>
             </div>
         </div>
     </div>
@@ -736,6 +736,7 @@
     let charts = {};
     let currentLang = 'he';
     let editingId = null;
+    let editingSubId = null;
     let globalSmartMetrics = {};
 
     // ===== תוסף Chart.js: מצייר את האחוז על כל פרוסה בגרף העוגה =====
@@ -2538,17 +2539,90 @@
         }
     }
 
+    // פותח את המודאל במצב "הוראה חדשה"
+    function openSubModal() {
+        editingSubId = null;
+        document.getElementById('sub-name').value = '';
+        document.getElementById('sub-amount').value = '';
+        document.getElementById('sub-day').value = '';
+        const t = document.getElementById('sub-modal-title');
+        if (t) t.innerText = currentLang === 'he' ? 'הוספת הוראת קבע' : 'Add Recurring Payment';
+        const b = document.getElementById('sub-modal-save');
+        if (b) b.innerText = currentLang === 'he' ? 'שמור' : 'Save';
+        openModal('sub-modal');
+    }
+
+    function closeSubModal() {
+        editingSubId = null;
+        closeModal('sub-modal');
+    }
+
+    // פותח את המודאל במצב עריכה של הוראה קיימת
+    function editSub(id) {
+        const s = recurring.find(x => String(x.id) === String(id));
+        if (!s) return;
+        editingSubId = s.id;
+        document.getElementById('sub-name').value = s.name;
+        document.getElementById('sub-amount').value = s.amount;
+        document.getElementById('sub-day').value = s.day;
+        renderSelects();
+        document.getElementById('sub-cat').value = s.cat;
+        const t = document.getElementById('sub-modal-title');
+        if (t) t.innerText = currentLang === 'he' ? 'עריכת הוראת קבע' : 'Edit Recurring Payment';
+        const b = document.getElementById('sub-modal-save');
+        if (b) b.innerText = currentLang === 'he' ? 'עדכן' : 'Update';
+        openModal('sub-modal');
+    }
+
     function addSubscription() {
-        const n = document.getElementById('sub-name').value;
-        const a = document.getElementById('sub-amount').value;
-        const d = document.getElementById('sub-day').value;
+        const n = document.getElementById('sub-name').value.trim();
+        const a = parseFloat(document.getElementById('sub-amount').value);
+        const d = parseInt(document.getElementById('sub-day').value);
         const c = document.getElementById('sub-cat').value;
-        if(n && a && d) {
+
+        if (!n) { showToast(currentLang === 'he' ? '⚠️ חסר שם ספק' : '⚠️ Provider name required'); return; }
+        if (isNaN(a) || a <= 0) { showToast(currentLang === 'he' ? '⚠️ סכום חייב להיות מספר חיובי' : '⚠️ Amount must be positive'); return; }
+        if (isNaN(d) || d < 1 || d > 31) { showToast(currentLang === 'he' ? '⚠️ יום בחודש חייב להיות בין 1 ל-31' : '⚠️ Day must be between 1 and 31'); return; }
+
+        if (editingSubId) {
+            const idx = recurring.findIndex(x => String(x.id) === String(editingSubId));
+            if (idx === -1) { editingSubId = null; return; }
+            const oldName = recurring[idx].name;
+            recurring[idx] = { id: recurring[idx].id, name: n, amount: a, day: d, cat: c };
+            syncRecurringTxThisMonth(oldName, n, a, d, c);
+            editingSubId = null;
+            saveData();
+            renderAll();
+            closeModal('sub-modal');
+            showToast(currentLang === 'he' ? 'הוראת הקבע עודכנה' : 'Recurring payment updated');
+        } else {
             recurring.push({ id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()), name: n, amount: a, day: d, cat: c });
             saveData();
+            renderAll();
             closeModal('sub-modal');
             showToast(currentLang === 'he' ? 'הוראת קבע נוספה' : 'Recurring payment added');
         }
+    }
+
+    // מעדכן את התנועה שכבר נוצרה אוטומטית החודש, כדי שלא תיווצר כפילות בהרצה הבאה
+    function syncRecurringTxThisMonth(oldName, newName, amount, day, cat) {
+        const cm = new Date().toISOString().slice(0,7);
+        const oldDesc = `🔄 ${oldName}`;
+        const newDesc = `🔄 ${newName}`;
+        const dim = new Date(parseInt(cm.slice(0,4)), parseInt(cm.slice(5,7)), 0).getDate();
+        const safeDay = Math.min(day, dim);
+        let touched = 0;
+        db.forEach(t => {
+            if (t.date && t.date.startsWith(cm) && t.desc === oldDesc && t.tags === 'הוראת קבע') {
+                t.desc   = newDesc;
+                t.amount = amount;
+                t.cat    = cat;
+                t.type   = getTxType(cat);
+                t.date   = `${cm}-${String(safeDay).padStart(2,'0')}`;
+                touched++;
+            }
+        });
+        return touched;
     }
 
     function renderSubs() {
@@ -2559,20 +2633,26 @@
                     <div style="font-size:0.8rem; color:#6b7280;">${s.day} ${currentLang === 'he' ? 'בחודש' : 'of month'} | ${s.cat}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
-                    <div style="font-weight:800; color:var(--danger);">${s.amount} ₪</div>
-                    <button class="action-btn" onclick="deleteSub('${s.id}')"><i class="fas fa-trash"></i></button>
+                    <div style="font-weight:800; color:var(--danger);">${fmtAmount(s.amount)} ₪</div>
+                    <button class="action-btn" onclick="editSub('${s.id}')" title="${currentLang==='he'?'ערוך':'Edit'}" style="color:var(--info);"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn" onclick="deleteSub('${s.id}')" title="${currentLang==='he'?'מחק':'Delete'}" style="color:var(--danger);"><i class="fas fa-trash"></i></button>
                 </div>
             </div>
         `).join('');
     }
 
     function deleteSub(id) {
-        if(confirm(currentLang === 'he' ? 'למחוק?' : 'Delete?')) { recurring = recurring.filter(x => String(x.id) !== String(id)); saveData(); }
+        if(confirm(currentLang === 'he' ? 'למחוק את הוראת הקבע?' : 'Delete this recurring payment?')) {
+            recurring = recurring.filter(x => String(x.id) !== String(id));
+            if (String(editingSubId) === String(id)) editingSubId = null;
+            saveData();
+            renderAll();
+        }
     }
 
     async function exportData() {
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets, dismissedAlerts}, null, 2);
-        const fileName = `pro_finance_diamond_v3.15_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const fileName = `pro_finance_diamond_v3.16_backup_${new Date().toISOString().slice(0,10)}.json`;
 
         if ('showSaveFilePicker' in window) {
             try {
@@ -3057,7 +3137,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.15 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.16 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
