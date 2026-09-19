@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <title>PRO-FINANCE DIAMOND V3.14 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.15 + AI Intelligence</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
@@ -536,7 +536,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.14 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.15 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -1149,8 +1149,8 @@
         // ===== ממוצעים חודשיים מ-AVG_START_MONTH ואילך =====
         const avg = calcMonthlyAverages();
         const avgNote = avg.months > 0
-            ? (currentLang === 'he' ? `ע"פ ${avg.months} חודשים מ-${AVG_START_LABEL}` : `Over ${avg.months} months since ${AVG_START_LABEL}`)
-            : (currentLang === 'he' ? 'אין נתונים בתקופה' : 'No data in range');
+            ? (currentLang === 'he' ? `ע"פ ${avg.months} חודשים עם הכנסה מ-${AVG_START_LABEL}` : `Over ${avg.months} months with income since ${AVG_START_LABEL}`)
+            : (currentLang === 'he' ? 'אין חודשים עם הכנסה בתקופה' : 'No months with income in range');
 
         const avgIncEl = document.getElementById('kpi-avg-inc');
         const avgIncSub = document.getElementById('kpi-avg-inc-sub');
@@ -1220,11 +1220,16 @@
     const AVG_START_LABEL = '11/2025';
     function calcMonthlyAverages() {
         const inRange = db.filter(t => t.date && t.date.slice(0,7) >= AVG_START_MONTH);
-        const months = [...new Set(inRange.map(t => t.date.slice(0,7)))];
-        const n = months.length;
+        // נחשבים רק חודשים שבהם הוזנה הכנסה — חודש בלי הכנסה הוא חודש חלקי ומעוות את הממוצע
+        const incomeMonths = new Set(
+            inRange.filter(t => t.type === 'income').map(t => t.date.slice(0,7))
+        );
+        const n = incomeMonths.size;
         if (n === 0) return { avgIncome: 0, avgExpense: 0, months: 0 };
-        const totInc = inRange.filter(t => t.type === 'income').reduce((a,b)=>a+b.amount, 0);
-        const totExp = inRange.filter(t => t.type === 'expense').reduce((a,b)=>a+b.amount, 0);
+        // גם המונה מוגבל לאותם חודשים, אחרת הוצאות מחודש בלי הכנסה ינפחו את הממוצע
+        const scoped = inRange.filter(t => incomeMonths.has(t.date.slice(0,7)));
+        const totInc = scoped.filter(t => t.type === 'income').reduce((a,b)=>a+b.amount, 0);
+        const totExp = scoped.filter(t => t.type === 'expense').reduce((a,b)=>a+b.amount, 0);
         return { avgIncome: totInc / n, avgExpense: totExp / n, months: n };
     }
 
@@ -2567,7 +2572,7 @@
 
     async function exportData() {
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets, dismissedAlerts}, null, 2);
-        const fileName = `pro_finance_diamond_v3.14_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const fileName = `pro_finance_diamond_v3.15_backup_${new Date().toISOString().slice(0,10)}.json`;
 
         if ('showSaveFilePicker' in window) {
             try {
@@ -3052,7 +3057,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.14 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.15 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
