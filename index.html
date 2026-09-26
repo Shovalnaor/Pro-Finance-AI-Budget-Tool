@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <title>PRO-FINANCE DIAMOND V3.17 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.19 + AI Intelligence</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
@@ -372,6 +372,11 @@
                     <div class="card" style="margin:0; padding:15px;"><h4 style="margin-top:0;" data-i18n="chartCat">פילוח קטגוריות</h4><div class="chart-container"><canvas id="c-pie"></canvas></div></div>
                 </div>
 
+                <div class="card" style="margin:0 0 20px; padding:15px;">
+                    <h4 style="margin-top:0;" data-i18n="chartCatBar">הוצאות לפי קטגוריה</h4>
+                    <div class="chart-container" id="c-cat-bar-wrap" style="height:380px;"><canvas id="c-cat-bar"></canvas></div>
+                </div>
+
                 <div style="overflow-x:auto;">
                     <table id="tbl-monthly">
                         <thead><tr>
@@ -536,7 +541,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.17 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.19 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -780,6 +785,39 @@
         }
     };
 
+    // ===== תוסף Chart.js: סכום ואחוז מעל כל עמודה בגרף העמודות =====
+    const barValuePlugin = {
+        id: 'barValues',
+        afterDatasetsDraw(chart) {
+            const meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data || !meta.data.length) return;
+            const vals = chart.data.datasets[0].data;
+            const total = vals.reduce((a, b) => a + b, 0) || 1;
+            const slot = (chart.chartArea.right - chart.chartArea.left) / vals.length;   // רוחב שנשאר לכל עמודה
+            const ctx = chart.ctx;
+            const txtColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#1f2937';
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            meta.data.forEach((bar, i) => {
+                const pct = Math.round(vals[i] / total * 100) + '%';
+                if (slot >= 58) {                     // מקום לשתי שורות: סכום + אחוז
+                    ctx.font = '800 12px Heebo, sans-serif';
+                    ctx.fillStyle = txtColor;
+                    ctx.fillText(Math.round(vals[i]).toLocaleString() + ' ₪', bar.x, bar.y - 17);
+                    ctx.font = '700 11px Heebo, sans-serif';
+                    ctx.fillStyle = '#6b7280';
+                    ctx.fillText(pct, bar.x, bar.y - 4);
+                } else if (slot >= 26) {              // צר (נייד) — רק אחוז
+                    ctx.font = '700 10px Heebo, sans-serif';
+                    ctx.fillStyle = '#6b7280';
+                    ctx.fillText(pct, bar.x, bar.y - 4);
+                }
+            });
+            ctx.restore();
+        }
+    };
+
     // --- AUTH LOGIC ---
     function toggleAuthMode() {
         isSignUpMode = !isSignUpMode;
@@ -918,7 +956,7 @@
             healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", kpiInvested: "הופנה להשקעות (חיסכון)", kpiSavRate: "שיעור חיסכון כולל", kpiAvgInc: "ממוצע הכנסות חודשי", kpiAvgExp: "ממוצע הוצאות חודשי", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", trendTitle: "מגמת הכנסות מול הוצאות", waterfallTitle: "זרימת כספים (Waterfall)", heatmapTitle: "מפת חום - הוצאות שבועיות (החודש)",
             aiHeading: "🤖 סוכן אסטרטגיה פיננסית", aiDesc1: "ה-AI ינתח את ההוצאות שלך ויגיד לך את האמת על הניהול הכספי שלך. <strong>הוא מונחה לא להגיד לך מה שאתה רוצה לשמוע</strong>, אלא לבקר בצורה אובייקטיבית וישירה את ההוצאות המיותרות ולתת פתרונות אמיתיים בהתבסס על מודל החיזוי והמדדים הפיננסיים שהמערכת חישבה.", aiBtn: "✨ נתח את התיק הפיננסי שלי מול התחזיות", aiLoading: "משלב נתוני חיזוי למודל LLM אובייקטיבי, נא להמתין...",
             autoCatBadge: "✨ זוהה אוטומטית", addTxTitle: "<i class='fas fa-edit'></i> הוספת תנועה", lblDate: "תאריך", lblDesc: "תיאור העסקה", descPlaceholder: "לדוגמה: ירח דבש בתאילנד...", lblAmount: "סכום", lblCat: "קטגוריה", lblTags: "תגיות (מופרדות בפסיק)", lblInstallments: "תשלומים", btnAdd: "הוסף למערכת", journalTitle: "יומן תנועות מלא", searchPlaceholder: "חיפוש...", opt100: "100 אחרונות", opt500: "500 אחרונות", optAll: "הצג הכל", btnImportExcel: "<i class='fas fa-file-import'></i> ייבוא", thDate: "תאריך", thDesc: "תיאור", thTags: "תגיות", thCat: "קטגוריה", thAmount: "סכום", thActions: "פעולות",
-            monthlyDetailTitle: "ניתוח חודשי מפורט", monthInc: "הכנסות", monthExp: "הוצאות", monthBal: "יתרה", monthInvested: "הופנה להשקעות (חיסכון)", chartDaily: "פילוח לפי ימים", chartCat: "פילוח קטגוריות",
+            monthlyDetailTitle: "ניתוח חודשי מפורט", monthInc: "הכנסות", monthExp: "הוצאות", monthBal: "יתרה", monthInvested: "הופנה להשקעות (חיסכון)", chartDaily: "פילוח לפי ימים", chartCat: "פילוח קטגוריות", chartCatBar: "הוצאות לפי קטגוריה",
             optAllTime: "כל הזמנים", opt3Months: "3 חודשים אחרונים", opt6Months: "6 חודשים אחרונים", opt12Months: "שנה אחרונה", optAllTags: "כל התגיות", catTotal: "סה\"כ הוצאות בתקופה", catAvg: "ממוצע חודשי", catDetails: "פירוט רשומות",
             goalsTitle: "יעדי חיסכון ומטרות", btnNewGoal: "<i class='fas fa-plus'></i> יעד חדש",
             fcExpInc: "צפי הכנסות לחודש הבא", fcExpExp: "צפי הוצאות לחודש הבא", fcExpBal: "חיסכון צפוי", fcDetail: "ניתוח תחזית חכמה",
@@ -939,7 +977,7 @@
             healthTitle: "Financial Health", analyzing: "Analyzing...", kpiInc: "Total Income", kpiExp: "Total Expenses", kpiBal: "Current Balance", kpiInvested: "To Investments (Saved)", kpiSavRate: "Total Savings Rate", kpiAvgInc: "Avg Monthly Income", kpiAvgExp: "Avg Monthly Expenses", kpiMom: "MoM Expense Comparison", budgetStatus: "Monthly Budget Status", trendTitle: "Income vs Expenses Trend", waterfallTitle: "Cash Flow (Waterfall)", heatmapTitle: "Weekly Expense Heatmap (This Month)",
             aiHeading: "🤖 Financial Strategy Agent", aiDesc1: "The AI will analyze your spending and tell you the truth about your financial management. <strong>It is instructed NOT to tell you what you want to hear</strong>, but to objectively and directly criticize unnecessary expenses and provide real solutions.", aiBtn: "✨ Analyze My Financial Portfolio vs Predictions", aiLoading: "Integrating prediction data to objective LLM model, please wait...",
             autoCatBadge: "✨ Auto-Detected", addTxTitle: "<i class='fas fa-edit'></i> Add Transaction", lblDate: "Date", lblDesc: "Description", descPlaceholder: "e.g., Honeymoon in Thailand...", lblAmount: "Amount", lblCat: "Category", lblTags: "Tags (Comma separated)", lblInstallments: "Installments", btnAdd: "Add to System", journalTitle: "Transaction Journal", searchPlaceholder: "Search...", opt100: "Last 100", opt500: "Last 500", optAll: "Show All", btnImportExcel: "<i class='fas fa-file-import'></i> Import", thDate: "Date", thDesc: "Description", thTags: "Tags", thCat: "Category", thAmount: "Amount", thActions: "Actions",
-            monthlyDetailTitle: "Detailed Monthly Analysis", monthInc: "Income", monthExp: "Expenses", monthBal: "Balance", monthInvested: "To Investments (Saved)", chartDaily: "Daily Breakdown", chartCat: "Category Breakdown",
+            monthlyDetailTitle: "Detailed Monthly Analysis", monthInc: "Income", monthExp: "Expenses", monthBal: "Balance", monthInvested: "To Investments (Saved)", chartDaily: "Daily Breakdown", chartCat: "Category Breakdown", chartCatBar: "Expenses by Category",
             optAllTime: "All Time", opt3Months: "Last 3 Months", opt6Months: "Last 6 Months", opt12Months: "Last Year", optAllTags: "All Tags", catTotal: "Total Spend in Period", catAvg: "Monthly Average", catDetails: "Record Details",
             goalsTitle: "Savings Goals", btnNewGoal: "<i class='fas fa-plus'></i> New Goal",
             fcExpInc: "Expected Income Next Month", fcExpExp: "Expected Expenses Next Month", fcExpBal: "Expected Savings", fcDetail: "Smart Forecast Analysis",
@@ -1830,6 +1868,7 @@
                     tooltip: {
                         mode: 'index',
                         intersect: false,
+                        filter: (item) => item.parsed.y > 0,   // לא להציג 12 שורות של "0 ₪"
                         callbacks: {
                             footer: (tooltipItems) => {
                                 let sum = 0;
@@ -1874,6 +1913,57 @@
                 }
             },
             plugins: [pieLabelsPlugin]
+        });
+
+        // ===== גרף עמודות עומד: הוצאות לפי קטגוריה, ממוין מהגבוה לנמוך =====
+        const barEntries = Object.entries(catSums).sort((a, b) => b[1] - a[1]);
+        const barNames = barEntries.map(e => e[0]);
+        const barTotal = barEntries.reduce((a, [, v]) => a + v, 0) || 1;
+        const isRtl = currentLang === 'he';
+        // שמות ארוכים נשברים לשתי שורות במקום להיות מוטים באלכסון
+        const wrapLabel = (name, max = 11) => {
+            const lines = []; let cur = '';
+            name.split(' ').forEach(w => {
+                const next = (cur + ' ' + w).trim();
+                if (next.length > max && cur) { lines.push(cur); cur = w; } else cur = next;
+            });
+            if (cur) lines.push(cur);
+            return lines;
+        };
+        if (charts.catBar) charts.catBar.destroy();
+        charts.catBar = new Chart(document.getElementById('c-cat-bar'), {
+            type: 'bar',
+            data: {
+                labels: barNames.map(n => wrapLabel(n)),
+                datasets: [{
+                    data: barEntries.map(e => e[1]),
+                    backgroundColor: barNames.map(n => getCatColor(n)),
+                    borderRadius: 6,
+                    maxBarThickness: 52
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                layout: { padding: { top: 34 } },            // מקום לתוויות מעל העמודה הגבוהה
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        rtl: isRtl,
+                        callbacks: {
+                            title: (items) => barNames[items[0].dataIndex],
+                            label: (ctx) => ` ${fmtAmount(ctx.parsed.y)} ₪ (${(ctx.parsed.y / barTotal * 100).toFixed(1)}%)`
+                        }
+                    }
+                },
+                scales: {
+                    x: { reverse: isRtl, grid: { display: false },          // בעברית — הגבוה ביותר מימין
+                         ticks: { autoSkip: false, maxRotation: 90, font: { weight: '600' } } },
+                    y: { beginAtZero: true, grace: '8%', position: isRtl ? 'right' : 'left',
+                         grid: { color: 'rgba(0,0,0,0.05)' },
+                         ticks: { callback: v => Number(v).toLocaleString() } }
+                }
+            },
+            plugins: [barValuePlugin]
         });
 
         document.querySelector('#tbl-monthly tbody').innerHTML = data.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t => {
@@ -2776,7 +2866,7 @@
 
     async function exportData() {
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets, dismissedAlerts}, null, 2);
-        const fileName = `pro_finance_diamond_v3.17_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const fileName = `pro_finance_diamond_v3.19_backup_${new Date().toISOString().slice(0,10)}.json`;
 
         if ('showSaveFilePicker' in window) {
             try {
@@ -3262,7 +3352,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.17 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.19 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
