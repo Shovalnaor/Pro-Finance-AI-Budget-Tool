@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <title>PRO-FINANCE DIAMOND V3.20 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.21 + AI Intelligence</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
@@ -562,7 +562,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.20 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.21 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -1359,22 +1359,9 @@
             const target = monthly * ratio;
             const spent  = spend[c.name] || 0;
             sumTarget += target; sumSpent += spent;
-            const pct   = target > 0 ? Math.min(spent / target * 100, 100) : 0;
-            const over  = spent > target;
-            const color = over ? 'var(--danger)' : c.color;
-            html += `
-                <div style="margin-bottom:12px; position:relative;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;">
-                        <span style="font-weight:600;">${c.name}</span>
-                        <span dir="ltr" style="display:inline-block; color:${over ? 'var(--danger)' : 'inherit'}; font-weight:${over ? '800' : '400'};">${fmtAmount(Math.round(spent))} / ${fmtAmount(Math.round(target))}</span>
-                    </div>
-                    <div style="height:10px; background:#e5e7eb; border-radius:5px; overflow:hidden; position:relative;">
-                        <div style="height:100%; transition:width .8s; width:${pct}%; background:${color}"></div>
-                        <div title="${currentLang==='he'?'הקצב שבו אתה אמור להיות היום':'Where you should be today'}"
-                             style="position:absolute; top:-2px; ${currentLang==='he'?'right':'left'}:${(pace*100).toFixed(1)}%; width:2px; height:14px; background:#111827; opacity:.45;"></div>
-                    </div>
-                </div>`;
+            html += budgetBarRow(c.name, c.color, spent, target, pace * 100);
         });
+        html = budgetLegend() + html;
 
         if (!anyBudget) {
             box.innerHTML = `<p style="text-align:center; color:#94a3b8; padding:20px;">${currentLang==='he' ? 'לא הוגדרו תקציבים. ניתן להגדיר בטאב ההגדרות.' : 'No budgets set.'}</p>`;
@@ -1527,6 +1514,48 @@
         if(countEl) countEl.innerText = db.length.toLocaleString();
     }
 
+    // ===== סטטוס תקציב: ירוק / כתום / אדום =====
+    const BUDGET_NEAR_PCT = 85;   // מכאן זה "מתקרב לחריגה"
+    function budgetStatus(spent, limit) {
+        if (limit <= 0) return { color: '#94a3b8', pct: 0, state: 'none' };
+        const pct = spent / limit * 100;
+        if (pct > 100)            return { color: 'var(--danger)',  pct, state: 'over' };
+        if (pct >= BUDGET_NEAR_PCT) return { color: 'var(--warning)', pct, state: 'near' };
+        return { color: 'var(--success)', pct, state: 'ok' };
+    }
+    function budgetLegend() {
+        const items = currentLang === 'he'
+            ? [['var(--success)','תקין'], ['var(--warning)',`מתקרב לחריגה (${BUDGET_NEAR_PCT}%+)`], ['var(--danger)','חריגה']]
+            : [['var(--success)','On track'], ['var(--warning)',`Approaching (${BUDGET_NEAR_PCT}%+)`], ['var(--danger)','Over budget']];
+        return `<div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px; font-size:0.78rem; color:#6b7280; font-weight:700;">` +
+            items.map(([c,t]) => `<span style="display:inline-flex; align-items:center; gap:6px;"><i style="width:10px; height:10px; border-radius:3px; background:${c}; display:inline-block;"></i>${t}</span>`).join('') +
+            `</div>`;
+    }
+    // שורת בר אחת — משותפת למעקב החודשי והשבועי
+    function budgetBarRow(catName, catColor, spent, limit, paceMarkPct) {
+        const st = budgetStatus(spent, limit);
+        const fill = Math.min(st.pct, 100);
+        const mark = paceMarkPct == null ? '' :
+            `<div title="${currentLang==='he'?'הקצב שבו אתה אמור להיות היום':'Where you should be today'}"
+                  style="position:absolute; top:-2px; ${currentLang==='he'?'right':'left'}:${paceMarkPct.toFixed(1)}%; width:2px; height:14px; background:#111827; opacity:.45;"></div>`;
+        return `
+            <div style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; margin-bottom:5px; gap:10px;">
+                    <span style="font-weight:600; display:inline-flex; align-items:center; gap:7px;">
+                        <i style="width:9px; height:9px; border-radius:50%; background:${catColor}; display:inline-block; flex:none;"></i>${catName}
+                    </span>
+                    <span style="white-space:nowrap;">
+                        <span dir="ltr" style="display:inline-block; color:${st.color}; font-weight:${st.state==='ok'?'600':'800'};">${fmtAmount(Math.round(spent))} / ${fmtAmount(Math.round(limit))}</span>
+                        <span style="color:${st.color}; font-weight:800; font-size:0.78rem;">&nbsp;(${Math.round(st.pct)}%)</span>
+                    </span>
+                </div>
+                <div style="height:10px; background:#e5e7eb; border-radius:5px; overflow:hidden; position:relative;">
+                    <div style="height:100%; transition:width .8s; width:${fill}%; background:${st.color};"></div>
+                    ${mark}
+                </div>
+            </div>`;
+    }
+
     function renderBudgetBars(month) {
         const container = document.getElementById('budget-bars');
         container.innerHTML = '';
@@ -1537,30 +1566,26 @@
         });
 
         let anyBudget = false;
+        let html = '';
+        let sumSpentM = 0, sumLimitM = 0;
         cats.forEach(c => {
             const limit = budgets[c.name] || 0;
-            if(limit > 0) {
+            if (limit > 0) {
                 anyBudget = true;
                 const spent = spending[c.name] || 0;
-                const pct = Math.min((spent / limit) * 100, 100);
-                const color = spent > limit ? 'var(--danger)' : c.color;
-
-                const badge = (pct >= 90 && pct <= 100) ? `<div class="badge-amber"></div>` : '';
-
-                container.innerHTML += `
-                    <div class="budget-bar-container" style="margin-bottom:12px; position:relative;">
-                        ${badge}
-                        <div class="budget-bar-info" style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;">
-                            <span style="font-weight:600; padding-right:${badge ? '15px' : '0'};">${c.name}</span>
-                            <span dir="ltr" style="display:inline-block;">${Math.round(spent).toLocaleString()} / ${limit.toLocaleString()}</span>
-                        </div>
-                        <div class="budget-bar-track" style="height:10px; background:#e5e7eb; border-radius:5px; overflow:hidden;">
-                            <div class="budget-bar-fill" style="height:100%; transition:width 0.8s; width:${pct}%; background:${color}"></div>
-                        </div>
-                    </div>
-                `;
+                sumSpentM += spent; sumLimitM += limit;
+                html += budgetBarRow(c.name, c.color, spent, limit, null);
             }
         });
+        if (anyBudget) {
+            const stT = budgetStatus(sumSpentM, sumLimitM);
+            html = budgetLegend() + html + `
+                <div style="margin-top:16px; padding-top:14px; border-top:1px dashed #d1d5db; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <span style="font-weight:800;">${currentLang==='he' ? 'סה"כ החודש' : 'Month total'}: <span dir="ltr" style="display:inline-block;">${fmtAmount(Math.round(sumSpentM))} / ${fmtAmount(Math.round(sumLimitM))}</span> ₪</span>
+                    <span style="font-weight:800; color:${stT.color};">${Math.round(stT.pct)}% ${currentLang==='he' ? 'מהתקציב' : 'of budget'}</span>
+                </div>`;
+            container.innerHTML = html;
+        }
         if(!anyBudget) container.innerHTML = `<p style="text-align:center; color:#94a3b8; padding:20px;">${currentLang === 'he' ? 'לא הוגדרו תקציבים. ניתן להגדיר בטאב ההגדרות.' : 'No budgets set. You can set them in the Settings tab.'}</p>`;
     }
 
@@ -3104,7 +3129,7 @@
 
     async function exportData() {
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets, dismissedAlerts}, null, 2);
-        const fileName = `pro_finance_diamond_v3.20_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const fileName = `pro_finance_diamond_v3.21_backup_${new Date().toISOString().slice(0,10)}.json`;
 
         if ('showSaveFilePicker' in window) {
             try {
@@ -3590,7 +3615,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.20 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.21 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
