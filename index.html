@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <title>PRO-FINANCE DIAMOND V3.19 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.20 + AI Intelligence</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
@@ -251,6 +251,27 @@
                     <div style="font-size:0.8rem; color: #6b7280; font-weight:700;" id="current-month-label"></div>
                 </div>
                 <div id="budget-bars"></div>
+            </div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+                    <h3 style="margin:0;" data-i18n="weeklyBudgetTitle">מעקב תקציב שבועי</h3>
+                    <div style="font-size:0.8rem; color:#6b7280; font-weight:700;" id="week-range-label"></div>
+                </div>
+                <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:16px;" data-i18n="weeklyBudgetHint">היעד השבועי מחושב מהתקציב החודשי לפי מספר הימים בשבוע הנוכחי.</div>
+                <div id="weekly-budget-bars"></div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin:0 0 6px;" data-i18n="groupsTitle">חלוקה לקבוצות הוצאה</h3>
+                <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:16px;" data-i18n="groupsHint">התקציב לכל קבוצה מחושב מסכום תקציבי הקטגוריות שבה.</div>
+                <div style="overflow-x:auto;"><table id="tbl-groups"></table></div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin:0 0 6px;" data-i18n="sixMonthTitle">סיכום הוצאות לפי קטגוריה — 6 חודשים</h3>
+                <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:16px;" id="six-month-range"></div>
+                <div style="overflow-x:auto;"><table id="tbl-six-month" style="font-size:0.88rem; white-space:nowrap;"></table></div>
             </div>
 
             <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:20px; margin-bottom:20px;">
@@ -541,7 +562,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.19 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.20 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -953,7 +974,7 @@
     const translations = {
         he: {
             navDash: "📊 מבט על", navJournal: "📝 יומן", navMonthly: "📅 חודשי", navCat: "🔍 קטגוריות", navGoals: "🎯 יעדים", navForecast: "🔮 תחזית", navScenario: "💡 סימולטור", navRecurring: "🔄 קבע", navSettings: "⚙️ הגדרות", navAbout: "ℹ️ אודות",
-            healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", kpiInvested: "הופנה להשקעות (חיסכון)", kpiSavRate: "שיעור חיסכון כולל", kpiAvgInc: "ממוצע הכנסות חודשי", kpiAvgExp: "ממוצע הוצאות חודשי", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", trendTitle: "מגמת הכנסות מול הוצאות", waterfallTitle: "זרימת כספים (Waterfall)", heatmapTitle: "מפת חום - הוצאות שבועיות (החודש)",
+            healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", kpiInvested: "הופנה להשקעות (חיסכון)", kpiSavRate: "שיעור חיסכון כולל", kpiAvgInc: "ממוצע הכנסות חודשי", kpiAvgExp: "ממוצע הוצאות חודשי", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", weeklyBudgetTitle: "מעקב תקציב שבועי", weeklyBudgetHint: "היעד השבועי מחושב מהתקציב החודשי לפי מספר הימים בשבוע הנוכחי.", groupsTitle: "חלוקה לקבוצות הוצאה", groupsHint: "התקציב לכל קבוצה מחושב מסכום תקציבי הקטגוריות שבה.", sixMonthTitle: "סיכום הוצאות לפי קטגוריה — 6 חודשים", trendTitle: "מגמת הכנסות מול הוצאות", waterfallTitle: "זרימת כספים (Waterfall)", heatmapTitle: "מפת חום - הוצאות שבועיות (החודש)",
             aiHeading: "🤖 סוכן אסטרטגיה פיננסית", aiDesc1: "ה-AI ינתח את ההוצאות שלך ויגיד לך את האמת על הניהול הכספי שלך. <strong>הוא מונחה לא להגיד לך מה שאתה רוצה לשמוע</strong>, אלא לבקר בצורה אובייקטיבית וישירה את ההוצאות המיותרות ולתת פתרונות אמיתיים בהתבסס על מודל החיזוי והמדדים הפיננסיים שהמערכת חישבה.", aiBtn: "✨ נתח את התיק הפיננסי שלי מול התחזיות", aiLoading: "משלב נתוני חיזוי למודל LLM אובייקטיבי, נא להמתין...",
             autoCatBadge: "✨ זוהה אוטומטית", addTxTitle: "<i class='fas fa-edit'></i> הוספת תנועה", lblDate: "תאריך", lblDesc: "תיאור העסקה", descPlaceholder: "לדוגמה: ירח דבש בתאילנד...", lblAmount: "סכום", lblCat: "קטגוריה", lblTags: "תגיות (מופרדות בפסיק)", lblInstallments: "תשלומים", btnAdd: "הוסף למערכת", journalTitle: "יומן תנועות מלא", searchPlaceholder: "חיפוש...", opt100: "100 אחרונות", opt500: "500 אחרונות", optAll: "הצג הכל", btnImportExcel: "<i class='fas fa-file-import'></i> ייבוא", thDate: "תאריך", thDesc: "תיאור", thTags: "תגיות", thCat: "קטגוריה", thAmount: "סכום", thActions: "פעולות",
             monthlyDetailTitle: "ניתוח חודשי מפורט", monthInc: "הכנסות", monthExp: "הוצאות", monthBal: "יתרה", monthInvested: "הופנה להשקעות (חיסכון)", chartDaily: "פילוח לפי ימים", chartCat: "פילוח קטגוריות", chartCatBar: "הוצאות לפי קטגוריה",
@@ -974,7 +995,7 @@
         },
         en: {
             navDash: "📊 Dashboard", navJournal: "📝 Journal", navMonthly: "📅 Monthly", navCat: "🔍 Categories", navGoals: "🎯 Goals", navForecast: "🔮 Forecast", navScenario: "💡 Scenario", navRecurring: "🔄 Recurring", navSettings: "⚙️ Settings", navAbout: "ℹ️ About",
-            healthTitle: "Financial Health", analyzing: "Analyzing...", kpiInc: "Total Income", kpiExp: "Total Expenses", kpiBal: "Current Balance", kpiInvested: "To Investments (Saved)", kpiSavRate: "Total Savings Rate", kpiAvgInc: "Avg Monthly Income", kpiAvgExp: "Avg Monthly Expenses", kpiMom: "MoM Expense Comparison", budgetStatus: "Monthly Budget Status", trendTitle: "Income vs Expenses Trend", waterfallTitle: "Cash Flow (Waterfall)", heatmapTitle: "Weekly Expense Heatmap (This Month)",
+            healthTitle: "Financial Health", analyzing: "Analyzing...", kpiInc: "Total Income", kpiExp: "Total Expenses", kpiBal: "Current Balance", kpiInvested: "To Investments (Saved)", kpiSavRate: "Total Savings Rate", kpiAvgInc: "Avg Monthly Income", kpiAvgExp: "Avg Monthly Expenses", kpiMom: "MoM Expense Comparison", budgetStatus: "Monthly Budget Status", weeklyBudgetTitle: "Weekly Budget Tracker", weeklyBudgetHint: "The weekly target is derived from the monthly budget, prorated by days.", groupsTitle: "Expense Groups", groupsHint: "Each group budget is the sum of its category budgets.", sixMonthTitle: "Expenses by Category — 6 Months", trendTitle: "Income vs Expenses Trend", waterfallTitle: "Cash Flow (Waterfall)", heatmapTitle: "Weekly Expense Heatmap (This Month)",
             aiHeading: "🤖 Financial Strategy Agent", aiDesc1: "The AI will analyze your spending and tell you the truth about your financial management. <strong>It is instructed NOT to tell you what you want to hear</strong>, but to objectively and directly criticize unnecessary expenses and provide real solutions.", aiBtn: "✨ Analyze My Financial Portfolio vs Predictions", aiLoading: "Integrating prediction data to objective LLM model, please wait...",
             autoCatBadge: "✨ Auto-Detected", addTxTitle: "<i class='fas fa-edit'></i> Add Transaction", lblDate: "Date", lblDesc: "Description", descPlaceholder: "e.g., Honeymoon in Thailand...", lblAmount: "Amount", lblCat: "Category", lblTags: "Tags (Comma separated)", lblInstallments: "Installments", btnAdd: "Add to System", journalTitle: "Transaction Journal", searchPlaceholder: "Search...", opt100: "Last 100", opt500: "Last 500", optAll: "Show All", btnImportExcel: "<i class='fas fa-file-import'></i> Import", thDate: "Date", thDesc: "Description", thTags: "Tags", thCat: "Category", thAmount: "Amount", thActions: "Actions",
             monthlyDetailTitle: "Detailed Monthly Analysis", monthInc: "Income", monthExp: "Expenses", monthBal: "Balance", monthInvested: "To Investments (Saved)", chartDaily: "Daily Breakdown", chartCat: "Category Breakdown", chartCatBar: "Expenses by Category",
@@ -1236,6 +1257,9 @@
         document.getElementById('current-month-label').innerText = thisMonth;
 
         renderBudgetBars(thisMonth);
+        renderWeeklyBudget();
+        renderExpenseGroups();
+        renderSixMonthTable();
         renderTrendChart();
         renderWaterfallChart();
         renderHeatmap();
@@ -1284,6 +1308,220 @@
         return { avgIncome: totInc / n, avgExpense: totExp / n, months: n };
     }
 
+    // ===== תאריך מקומי בפורמט YYYY-MM-DD (בלי הסטת UTC) =====
+    function isoLocal(d) {
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    // ===== חלון השבוע הנוכחי (א׳–ש׳), חתוך לגבולות החודש =====
+    // חיתוך לחודש הכרחי: בלעדיו שבוע שחוצה חודשים היה מושווה לתקציב של חודש אחד בלבד.
+    function getWeekWindow() {
+        const today = new Date();
+        const sunday   = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
+        const saturday = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + 6);
+        const mStart   = new Date(today.getFullYear(), today.getMonth(), 1);
+        const mEnd     = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const start = sunday   < mStart ? mStart : sunday;
+        const end   = saturday > mEnd   ? mEnd   : saturday;
+        const DAY = 86400000;
+        return {
+            startISO: isoLocal(start),
+            endISO:   isoLocal(end),
+            days:     Math.round((end - start) / DAY) + 1,
+            elapsed:  Math.min(Math.round((today - start) / DAY) + 1, Math.round((end - start) / DAY) + 1),
+            daysInMonth: mEnd.getDate()
+        };
+    }
+
+    function renderWeeklyBudget() {
+        const box = document.getElementById('weekly-budget-bars');
+        if (!box) return;
+        const w = getWeekWindow();
+
+        const lbl = document.getElementById('week-range-label');
+        if (lbl) {
+            const f = iso => iso.slice(8,10) + '/' + iso.slice(5,7);
+            lbl.innerText = `${f(w.startISO)} – ${f(w.endISO)} · ${currentLang==='he' ? `יום ${w.elapsed} מתוך ${w.days}`.replace(/(\d+)/g,'\u2066$1\u2069') : `day ${w.elapsed}/${w.days}`}`;
+        }
+
+        const spend = {};
+        db.filter(t => t.type === 'expense' && t.date >= w.startISO && t.date <= w.endISO)
+          .forEach(t => { spend[t.cat] = (spend[t.cat] || 0) + t.amount; });
+
+        const ratio = w.days / w.daysInMonth;          // חלק השבוע מתוך החודש
+        const pace  = w.elapsed / w.days;              // כמה מהשבוע כבר עבר
+        let html = '', anyBudget = false, sumTarget = 0, sumSpent = 0;
+
+        cats.forEach(c => {
+            const monthly = budgets[c.name] || 0;
+            if (monthly <= 0) return;
+            anyBudget = true;
+            const target = monthly * ratio;
+            const spent  = spend[c.name] || 0;
+            sumTarget += target; sumSpent += spent;
+            const pct   = target > 0 ? Math.min(spent / target * 100, 100) : 0;
+            const over  = spent > target;
+            const color = over ? 'var(--danger)' : c.color;
+            html += `
+                <div style="margin-bottom:12px; position:relative;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;">
+                        <span style="font-weight:600;">${c.name}</span>
+                        <span dir="ltr" style="display:inline-block; color:${over ? 'var(--danger)' : 'inherit'}; font-weight:${over ? '800' : '400'};">${fmtAmount(Math.round(spent))} / ${fmtAmount(Math.round(target))}</span>
+                    </div>
+                    <div style="height:10px; background:#e5e7eb; border-radius:5px; overflow:hidden; position:relative;">
+                        <div style="height:100%; transition:width .8s; width:${pct}%; background:${color}"></div>
+                        <div title="${currentLang==='he'?'הקצב שבו אתה אמור להיות היום':'Where you should be today'}"
+                             style="position:absolute; top:-2px; ${currentLang==='he'?'right':'left'}:${(pace*100).toFixed(1)}%; width:2px; height:14px; background:#111827; opacity:.45;"></div>
+                    </div>
+                </div>`;
+        });
+
+        if (!anyBudget) {
+            box.innerHTML = `<p style="text-align:center; color:#94a3b8; padding:20px;">${currentLang==='he' ? 'לא הוגדרו תקציבים. ניתן להגדיר בטאב ההגדרות.' : 'No budgets set.'}</p>`;
+            return;
+        }
+
+        const expected = sumTarget * pace;
+        const diff = expected - sumSpent;
+        const ok = diff >= 0;
+        html += `
+            <div style="margin-top:16px; padding-top:14px; border-top:1px dashed #d1d5db; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <span style="font-weight:800;">${currentLang==='he' ? 'סה"כ השבוע' : 'Week total'}: <span dir="ltr" style="display:inline-block;">${fmtAmount(Math.round(sumSpent))} / ${fmtAmount(Math.round(sumTarget))}</span> ₪</span>
+                <span style="font-weight:800; color:${ok ? 'var(--success)' : 'var(--danger)'};">
+                    ${ok ? (currentLang==='he' ? `✅ מתחת לקצב ב-${fmtAmount(Math.round(diff))} ₪` : `✅ ${fmtAmount(Math.round(diff))} under pace`)
+                         : (currentLang==='he' ? `⚠️ מעל הקצב ב-${fmtAmount(Math.round(-diff))} ₪` : `⚠️ ${fmtAmount(Math.round(-diff))} over pace`)}
+                </span>
+            </div>`;
+        box.innerHTML = html;
+    }
+
+    // ===== קבוצות הוצאה: התאמה לפי מילות מפתח בשם הקטגוריה =====
+    // קטגוריית הוצאה שלא מתאימה לאף קבוצה נופלת לקבוצה האחרונה, כך ששום שקל לא נעלם.
+    const EXPENSE_GROUPS = [
+        { name: 'הוצאות קבועות ובסיסיות',        nameEn: 'Fixed & Essential',        match: ['דיור','חשבונ','רכב','תחבור','בריאות','ביטוח','משכנת'] },
+        { name: 'מחיה שוטפת ואיכות חיים',        nameEn: 'Daily Living',             match: ['מזון','סופר','בילוי','מסעד','טיפוח','כושר','ספורט','קניות','ביגוד','חיות'] },
+        { name: 'צבירה לחגים, אירועים וחופשות',  nameEn: 'Events & Vacations',       match: ['מתנ','חופש','אירוע','חג','הופע','אטרקצ'] },
+        { name: 'העשרה ושונות',                  nameEn: 'Enrichment & Other',       match: [] }   // ברירת מחדל
+    ];
+    function groupOf(catName) {
+        for (let i = 0; i < EXPENSE_GROUPS.length - 1; i++) {
+            if (EXPENSE_GROUPS[i].match.some(k => catName.includes(k))) return i;
+        }
+        return EXPENSE_GROUPS.length - 1;
+    }
+
+    function renderExpenseGroups() {
+        const tbl = document.getElementById('tbl-groups');
+        if (!tbl) return;
+        const thisMonth = ymLocal(new Date());
+        const spend = {};
+        db.filter(t => t.type === 'expense' && t.date && t.date.startsWith(thisMonth))
+          .forEach(t => { spend[t.cat] = (spend[t.cat] || 0) + t.amount; });
+
+        const rows = EXPENSE_GROUPS.map(() => ({ cats: [], budget: 0, actual: 0 }));
+        cats.forEach(c => {
+            if (getTxType(c.name) !== 'expense') return;
+            const gi = groupOf(c.name);
+            const b = budgets[c.name] || 0;
+            const a = spend[c.name] || 0;
+            if (b > 0 || a > 0) rows[gi].cats.push(c.name);
+            rows[gi].budget += b;
+            rows[gi].actual += a;
+        });
+        const totalBudget = rows.reduce((a, r) => a + r.budget, 0);
+        const totalActual = rows.reduce((a, r) => a + r.actual, 0);
+
+        const head = currentLang === 'he'
+            ? ['קבוצת הוצאה','קטגוריות כלולות','תקציב חודשי','הוצאה בפועל','% מהתקציב']
+            : ['Group','Categories','Monthly budget','Actual','% of budget'];
+
+        let html = `<thead><tr>${head.map((h,i)=>`<th style="text-align:${i<2?'right':'left'};">${h}</th>`).join('')}</tr></thead><tbody>`;
+        rows.forEach((r, i) => {
+            if (r.budget === 0 && r.actual === 0) return;
+            const share = totalBudget > 0 ? (r.budget / totalBudget * 100) : 0;
+            const used  = r.budget > 0 ? (r.actual / r.budget * 100) : null;
+            const col   = used === null ? 'inherit' : (used > 100 ? 'var(--danger)' : (used > 85 ? 'var(--warning)' : 'var(--success)'));
+            html += `<tr>
+                <td style="font-weight:800;">${currentLang==='he' ? EXPENSE_GROUPS[i].name : EXPENSE_GROUPS[i].nameEn}
+                    <div style="font-size:0.72rem; color:#9ca3af; font-weight:600;">${share.toFixed(1)}% ${currentLang==='he'?'מהתקציב הכולל':'of total budget'}</div></td>
+                <td style="font-size:0.8rem; color:#6b7280;">${r.cats.join(' · ') || '—'}</td>
+                <td style="text-align:left; font-weight:700;">${fmtAmount(Math.round(r.budget))} ₪</td>
+                <td style="text-align:left; font-weight:800;">${fmtAmount(Math.round(r.actual))} ₪</td>
+                <td style="text-align:left; font-weight:800; color:${col};">${used === null ? '—' : used.toFixed(1) + '%'}</td>
+            </tr>`;
+        });
+        const totUsed = totalBudget > 0 ? (totalActual / totalBudget * 100) : null;
+        html += `<tr style="background:rgba(0,0,0,0.03);">
+            <td style="font-weight:900;">${currentLang==='he'?'סה"כ':'Total'}</td><td></td>
+            <td style="text-align:left; font-weight:900;">${fmtAmount(Math.round(totalBudget))} ₪</td>
+            <td style="text-align:left; font-weight:900;">${fmtAmount(Math.round(totalActual))} ₪</td>
+            <td style="text-align:left; font-weight:900; color:${totUsed !== null && totUsed > 100 ? 'var(--danger)' : 'var(--success)'};">${totUsed === null ? '—' : totUsed.toFixed(1) + '%'}</td>
+        </tr></tbody>`;
+        tbl.innerHTML = html;
+    }
+
+    function renderSixMonthTable() {
+        const tbl = document.getElementById('tbl-six-month');
+        if (!tbl) return;
+        const months = [];
+        for (let i = 5; i >= 0; i--) months.push(ymOffset(-i));
+
+        const rangeEl = document.getElementById('six-month-range');
+        if (rangeEl) {
+            const f = m => m.slice(5,7) + '/' + m.slice(0,4);
+            rangeEl.innerText = `${f(months[0])} – ${f(months[5])}`;
+        }
+
+        const grid = {};
+        db.filter(t => t.type === 'expense' && t.date && months.includes(t.date.slice(0,7)))
+          .forEach(t => {
+              if (!grid[t.cat]) grid[t.cat] = {};
+              const m = t.date.slice(0,7);
+              grid[t.cat][m] = (grid[t.cat][m] || 0) + t.amount;
+          });
+
+        const catRows = Object.keys(grid)
+            .map(c => ({ cat: c, total: months.reduce((a,m) => a + (grid[c][m] || 0), 0) }))
+            .sort((a,b) => b.total - a.total);
+
+        if (!catRows.length) {
+            tbl.innerHTML = `<tbody><tr><td style="text-align:center; color:#94a3b8; padding:20px;">${currentLang==='he'?'אין נתוני הוצאות בתקופה.':'No expense data in range.'}</td></tr></tbody>`;
+            return;
+        }
+
+        const MON = currentLang === 'he'
+            ? ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר']
+            : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const mLabel = m => MON[parseInt(m.slice(5,7),10) - 1];
+
+        let html = `<thead><tr><th style="text-align:right;">${currentLang==='he'?'קטגוריה':'Category'}</th>` +
+            months.map(m => `<th style="text-align:left;">${mLabel(m)}</th>`).join('') +
+            `<th style="text-align:left;">${currentLang==='he'?'סה"כ':'Total'}</th>` +
+            `<th style="text-align:left;">${currentLang==='he'?'ממוצע':'Avg'}</th></tr></thead><tbody>`;
+
+        const colTotals = months.map(m => 0);
+        catRows.forEach(r => {
+            // הממוצע מחושב רק על חודשים עם הוצאה בקטגוריה — אחרת קטגוריה עונתית נראית זולה מדי
+            const active = months.filter(m => (grid[r.cat][m] || 0) > 0).length || 1;
+            html += `<tr><td style="font-weight:700;"><span class="category-pill" style="color:${getCatColor(r.cat)}; background:${getCatColor(r.cat)}15">${r.cat}</span></td>`;
+            months.forEach((m, i) => {
+                const v = grid[r.cat][m] || 0;
+                colTotals[i] += v;
+                html += `<td style="text-align:left; color:${v ? 'inherit' : '#d1d5db'};">${v ? fmtAmount(Math.round(v)) + ' ₪' : '—'}</td>`;
+            });
+            html += `<td style="text-align:left; font-weight:800;">${fmtAmount(Math.round(r.total))} ₪</td>`;
+            html += `<td style="text-align:left; color:#6b7280; font-weight:700;">${fmtAmount(Math.round(r.total / active))} ₪</td></tr>`;
+        });
+
+        const grand = colTotals.reduce((a,b)=>a+b,0);
+        const activeMonths = colTotals.filter(v => v > 0).length || 1;
+        html += `<tr style="background:rgba(0,0,0,0.03);"><td style="font-weight:900;">${currentLang==='he'?'סה"כ':'Total'}</td>` +
+            colTotals.map(v => `<td style="text-align:left; font-weight:900;">${v ? fmtAmount(Math.round(v)) + ' ₪' : '—'}</td>`).join('') +
+            `<td style="text-align:left; font-weight:900;">${fmtAmount(Math.round(grand))} ₪</td>` +
+            `<td style="text-align:left; font-weight:900;">${fmtAmount(Math.round(grand / activeMonths))} ₪</td></tr></tbody>`;
+        tbl.innerHTML = html;
+    }
+
     function renderStats() {
         const countEl = document.getElementById('stat-records-count');
         if(countEl) countEl.innerText = db.length.toLocaleString();
@@ -1314,7 +1552,7 @@
                         ${badge}
                         <div class="budget-bar-info" style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:5px;">
                             <span style="font-weight:600; padding-right:${badge ? '15px' : '0'};">${c.name}</span>
-                            <span>${Math.round(spent).toLocaleString()} / ${limit.toLocaleString()}</span>
+                            <span dir="ltr" style="display:inline-block;">${Math.round(spent).toLocaleString()} / ${limit.toLocaleString()}</span>
                         </div>
                         <div class="budget-bar-track" style="height:10px; background:#e5e7eb; border-radius:5px; overflow:hidden;">
                             <div class="budget-bar-fill" style="height:100%; transition:width 0.8s; width:${pct}%; background:${color}"></div>
@@ -2866,7 +3104,7 @@
 
     async function exportData() {
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets, dismissedAlerts}, null, 2);
-        const fileName = `pro_finance_diamond_v3.19_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const fileName = `pro_finance_diamond_v3.20_backup_${new Date().toISOString().slice(0,10)}.json`;
 
         if ('showSaveFilePicker' in window) {
             try {
@@ -3352,7 +3590,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.19 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.20 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
