@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <title>PRO-FINANCE DIAMOND V3.16 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.17 + AI Intelligence</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
@@ -429,7 +429,7 @@
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                     <h2 style="margin:0;" data-i18n="goalsTitle">יעדי חיסכון ומטרות</h2>
-                    <button class="btn-primary" onclick="openModal('goal-modal')" data-i18n="btnNewGoal"><i class="fas fa-plus"></i> יעד חדש</button>
+                    <button class="btn-primary" onclick="openGoalModal()" data-i18n="btnNewGoal"><i class="fas fa-plus"></i> יעד חדש</button>
                 </div>
                 <div id="goals-list" class="card-grid"></div>
             </div>
@@ -536,7 +536,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.16 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.17 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -626,13 +626,13 @@
 
     <div id="sub-modal" class="modal-overlay">
         <div class="modal-box">
-            <h3 id="sub-modal-title" data-i18n="modRecTitle">הוספת הוראת קבע</h3>
+            <h3 id="sub-modal-title">הוספת הוראת קבע</h3>
             <div class="input-group"><label data-i18n="modRecName">שם הספק (לדוגמה: ארנונה)</label><input id="sub-name" class="input-control"></div>
             <div class="input-group"><label data-i18n="modRecAmount">סכום חודשי</label><input type="number" id="sub-amount" class="input-control"></div>
             <div class="input-group"><label data-i18n="modRecDay">יום בחודש (1-31)</label><input type="number" id="sub-day" class="input-control" max="31" min="1"></div>
             <div class="input-group"><label data-i18n="modRecCat">קטגוריה</label><select id="sub-cat" class="input-control"></select></div>
             <div style="display:flex; gap:10px; margin-top:25px;">
-                <button class="btn-primary" style="flex:1;" id="sub-modal-save" onclick="addSubscription()" data-i18n="modBtnSave">שמור</button>
+                <button class="btn-primary" style="flex:1;" id="sub-modal-save" onclick="addSubscription()">שמור</button>
                 <button class="btn-primary" style="flex:1; background:#f3f4f6; color:#333;" onclick="closeSubModal()" data-i18n="modBtnCancel">ביטול</button>
             </div>
         </div>
@@ -640,12 +640,17 @@
 
     <div id="goal-modal" class="modal-overlay">
         <div class="modal-box">
-            <h3 data-i18n="modGoalTitle">יעד חיסכון חדש</h3>
+            <h3 id="goal-modal-title">יעד חיסכון חדש</h3>
             <div class="input-group"><label data-i18n="modGoalName">מה המטרה? (חופשה, רכב וכו')</label><input id="goal-name" class="input-control"></div>
             <div class="input-group"><label data-i18n="modGoalAmount">סכום היעד</label><input type="number" id="goal-target" class="input-control"></div>
+            <div class="input-group" style="margin-top:10px;">
+                <label data-i18n="modGoalLink">סנכרון אוטומטי מקטגוריה</label>
+                <select id="goal-link-cat" class="input-control"></select>
+                <div style="font-size:0.75rem; color:#6b7280; margin-top:5px;" data-i18n="modGoalLinkHint">כל תנועה בקטגוריה שנבחרה תיספר אוטומטית כהפקדה ליעד.</div>
+            </div>
             <div style="display:flex; gap:10px; margin-top:25px;">
-                <button class="btn-primary" style="flex:1;" onclick="addGoal()" data-i18n="modGoalBtn">צור יעד</button>
-                <button class="btn-primary" style="flex:1; background:#f3f4f6; color:#333;" onclick="closeModal('goal-modal')" data-i18n="modBtnCancel">ביטול</button>
+                <button class="btn-primary" style="flex:1;" id="goal-modal-save" onclick="addGoal()">צור יעד</button>
+                <button class="btn-primary" style="flex:1; background:#f3f4f6; color:#333;" onclick="closeGoalModal()" data-i18n="modBtnCancel">ביטול</button>
             </div>
         </div>
     </div>
@@ -737,6 +742,13 @@
     let currentLang = 'he';
     let editingId = null;
     let editingSubId = null;
+    let editingGoalId = null;
+
+    // מפתח חודש (YYYY-MM) לפי שעון מקומי.
+    // toISOString() ממיר ל-UTC — ובישראל ה-1 בחודש בחצות הוא עדיין החודש הקודם ב-UTC,
+    // מה שגרם ל"חודש קודם" להיות מחושב כחודשיים אחורה.
+    function ymLocal(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+    function ymOffset(k) { const n = new Date(); return ymLocal(new Date(n.getFullYear(), n.getMonth() + k, 1)); }
     let globalSmartMetrics = {};
 
     // ===== תוסף Chart.js: מצייר את האחוז על כל פרוסה בגרף העוגה =====
@@ -920,7 +932,7 @@
             aboutText3: "שני עקרונות הנחו אותי לכל אורך הדרך. הראשון: מוצר פיננסי טוב צריך להזהיר אותך לפני שחרגת מהתקציב, לא לספר לך על זה בדיעבד. השני: המידע הפיננסי שלך שייך רק לך. בתור מהנדס תעשייה וניהול, אני מאמין שהכלים הכי טובים הם אלה שפותרים בעיה אמיתית בפשטות — וזה בדיוק מה שניסיתי לבנות כאן.",
             aboutHeadFeat: "✨ פיצ'רים מרכזיים", feat1Title: "לוח בקרה (Dashboard)", feat1Desc: "תמונת מצב מיידית של המצב הפיננסי. סך הכנסות והוצאות שנתי, יתרה נוכחית וסטטוס תקציב.", feat9Title: "AI Advisor", feat9Desc: "ניתוח אובייקטיבי של ההוצאות שלך וקבלת ייעוץ פיננסי אישי המבוסס על בינה מלאכותית.", feat10Title: "ניהול תקציב חודשי", feat10Desc: "הגדרת תקציב אישי לכל קטגוריית הוצאה ומעקב בזמן אמת למניעת חריגות.", feat2Title: "יעדי חיסכון", feat2Desc: "הגדר מטרות פיננסיות. המערכת עוקבת אחר ההתקדמות ומחשבת צפי השלמה אוטומטי.", feat3Title: "ניתוח חודשי", feat3Desc: "צלול לנתוני חודש ספציפי עם גרפים של הוצאות יומיות ופילוח לפי קטגוריות.", feat4Title: "ניתוח קטגוריה", feat4Desc: "הבן איפה הכסף שלך הולך עם מגמות של קטגוריות לאורך זמן ותמיכה בתגיות חופשיות.", feat5Title: "תחזית וסימולטור", feat5Desc: "צפה בתחזית מבוססת ממוצע וסמלץ מצבי צבירת הון עם ריבית דריבית.", feat6Title: "יומן תנועות", feat6Desc: "הוסף, ערוך, שכפל ומחק תנועות בקלות. כולל ייבוא ישיר מקבצי בנק.",
             aboutHeadTech: "🛡️ מימוש טכני", aboutTechDesc: "האפליקציה בנויה עם טכנולוגיות צד-לקוח לביצועים מהירים, עם סנכרון בזמן אמת מול Firebase Realtime Database.", aboutHeadContact: "יצירת קשר", aboutAuthor: "שובל נאור — מהנדס תעשייה וניהול", aboutFooterLove: "נבנה באהבה ❤️", aboutFooterCopy: "© 2026 PRO-FINANCE. כל הזכויות שמורות.",
-            modRecTitle: "הוספת הוראת קבע", modRecName: "שם הספק (לדוגמה: ארנונה)", modRecAmount: "סכום חודשי", modRecDay: "יום בחודש (1-31)", modRecCat: "קטגוריה", modBtnSave: "שמור", modBtnCancel: "ביטול", modGoalTitle: "יעד חיסכון חדש", modGoalName: "מה המטרה? (חופשה, רכב וכו')", modGoalAmount: "סכום היעד", modGoalBtn: "צור יעד"
+            modRecTitle: "הוספת הוראת קבע", modRecName: "שם הספק (לדוגמה: ארנונה)", modRecAmount: "סכום חודשי", modRecDay: "יום בחודש (1-31)", modRecCat: "קטגוריה", modBtnSave: "שמור", modBtnCancel: "ביטול", modGoalTitle: "יעד חיסכון חדש", modGoalName: "מה המטרה? (חופשה, רכב וכו')", modGoalAmount: "סכום היעד", modGoalBtn: "צור יעד", modGoalLink: "סנכרון אוטומטי מקטגוריה", modGoalLinkHint: "כל תנועה בקטגוריה שנבחרה תיספר אוטומטית כהפקדה ליעד."
         },
         en: {
             navDash: "📊 Dashboard", navJournal: "📝 Journal", navMonthly: "📅 Monthly", navCat: "🔍 Categories", navGoals: "🎯 Goals", navForecast: "🔮 Forecast", navScenario: "💡 Scenario", navRecurring: "🔄 Recurring", navSettings: "⚙️ Settings", navAbout: "ℹ️ About",
@@ -941,7 +953,7 @@
             aboutText3: "Two principles guided me throughout. First: a good financial product should warn you before you exceed your budget, not tell you about it afterwards. Second: your financial data belongs only to you. As an Industrial Engineering and Management engineer, I believe the best tools solve a real problem simply — and that's exactly what I tried to build here.",
             aboutHeadFeat: "✨ Key Features", feat1Title: "Dashboard", feat1Desc: "Immediate snapshot of your financial status. Total annual income/expenses, current balance, and budget status.", feat9Title: "AI Advisor", feat9Desc: "Objective analysis of your spending and personalized financial advice powered by artificial intelligence.", feat10Title: "Monthly Budgets", feat10Desc: "Set a custom budget for each spending category and track it in real-time to prevent overspending.", feat2Title: "Savings Goals", feat2Desc: "Set financial targets. The system tracks your progress and calculates automatic completion projections.", feat3Title: "Monthly Analysis", feat3Desc: "Dive into specific month data with daily expense graphs and category breakdowns.", feat4Title: "Category Analysis", feat4Desc: "Understand where your money goes with category trends over time and free-form tag support.", feat5Title: "Forecast & Simulator", feat5Desc: "View forecasts based on averages and simulate wealth accumulation with compound interest.", feat6Title: "Transaction Journal", feat6Desc: "Easily add, edit, clone, and delete transactions. Includes direct bank file imports.",
             aboutHeadTech: "🛡️ Technical Implementation", aboutTechDesc: "The app is built with client-side technologies for fast performance, with real-time sync via Firebase Realtime Database.", aboutHeadContact: "Contact", aboutAuthor: "Shoval Naor — Industrial Engineering & Management", aboutFooterLove: "Built with love ❤️", aboutFooterCopy: "© 2026 PRO-FINANCE. All rights reserved.",
-            modRecTitle: "Add Recurring Payment", modRecName: "Provider Name (e.g., Municipality)", modRecAmount: "Monthly Amount", modRecDay: "Day of Month (1-31)", modRecCat: "Category", modBtnSave: "Save", modBtnCancel: "Cancel", modGoalTitle: "New Savings Goal", modGoalName: "What is the goal? (Vacation, Car, etc.)", modGoalAmount: "Target Amount", modGoalBtn: "Create Goal"
+            modRecTitle: "Add Recurring Payment", modRecName: "Provider Name (e.g., Municipality)", modRecAmount: "Monthly Amount", modRecDay: "Day of Month (1-31)", modRecCat: "Category", modBtnSave: "Save", modBtnCancel: "Cancel", modGoalTitle: "New Savings Goal", modGoalName: "What is the goal? (Vacation, Car, etc.)", modGoalAmount: "Target Amount", modGoalBtn: "Create Goal", modGoalLink: "Auto-sync from category", modGoalLinkHint: "Every transaction in the selected category counts as a deposit to this goal."
         }
     };
 
@@ -996,7 +1008,7 @@
     }
 
     function checkBudgetAlerts() {
-        const _currentMonthKey = new Date().toISOString().slice(0,7);
+        const _currentMonthKey = ymLocal(new Date());
         const _storedAlertMonth = localStorage.getItem('finAlertsMonth');
         if (_storedAlertMonth !== _currentMonthKey) {
             dismissedAlerts = [];
@@ -1005,7 +1017,7 @@
             } catch(e) {}
         }
 
-        const thisMonth = new Date().toISOString().slice(0,7);
+        const thisMonth = ymLocal(new Date());
         const spending = {};
         db.filter(t => t.type==='expense' && t.date.startsWith(thisMonth)).forEach(t => {
             spending[t.cat] = (spending[t.cat] || 0) + t.amount;
@@ -1141,7 +1153,7 @@
         }
 
         const today = new Date();
-        const thisMonth = today.toISOString().slice(0,7);
+        const thisMonth = ymLocal(today);
         const monthExp = db.filter(t => t.type==='expense' && t.date.startsWith(thisMonth)).reduce((a,b)=>a+b.amount,0);
 
         // מריץ את מודל החיזוי כדי שה-AI Advisor ימשיך לקבל את המדדים, גם בלי כרטיס ייעודי
@@ -1169,7 +1181,7 @@
         }
         if (avgExpSub) avgExpSub.innerText = avgNote;
 
-        const lastMonth = new Date(today.getFullYear(), today.getMonth()-1, 1).toISOString().slice(0,7);
+        const lastMonth = ymOffset(-1);
         const lastMonthExp = db.filter(t => t.type==='expense' && t.date.startsWith(lastMonth)).reduce((a,b)=>a+b.amount,0);
         const momEl = document.getElementById('kpi-mom');
         if (lastMonthExp > 0) {
@@ -1278,7 +1290,7 @@
 
     function updateHealthScore() {
         const today = new Date();
-        const thisMonth = today.toISOString().slice(0,7);
+        const thisMonth = ymLocal(today);
         const monthData = db.filter(t => t.date.startsWith(thisMonth));
         const mInc = monthData.filter(t => t.type === 'income').reduce((a,b)=>a+b.amount, 0);
         const mExp = monthData.filter(t => t.type === 'expense').reduce((a,b)=>a+b.amount, 0);
@@ -1308,7 +1320,7 @@
             });
             pBudget = catsWithBudget > 0 ? (catsUnderBudget / catsWithBudget) * 100 : 70;
 
-            const lastMonth = new Date(today.getFullYear(), today.getMonth()-1, 1).toISOString().slice(0,7);
+            const lastMonth = ymOffset(-1);
             const lastMonthExp = db.filter(t => t.type==='expense' && t.date.startsWith(lastMonth)).reduce((a,b)=>a+b.amount,0);
             if (lastMonthExp > 0) {
                 const variance = Math.abs(mExp - lastMonthExp) / lastMonthExp;
@@ -1369,7 +1381,7 @@
         const insightsBox = document.getElementById('ai-insights-box');
         if (!insightsBox) return;
 
-        const thisMonth = new Date().toISOString().slice(0,7);
+        const thisMonth = ymLocal(new Date());
         const monthTx = db.filter(t => t.date.startsWith(thisMonth) && t.type === 'expense');
         if(monthTx.length === 0) {
              insightsBox.innerHTML = `<div class="ai-item"><div class="ai-icon">ℹ️</div><div>${currentLang === 'he' ? 'אין מספיק נתונים לחודש זה לתובנות אוטומטיות.' : 'Not enough data for insights this month.'}</div></div>`;
@@ -1497,7 +1509,7 @@
     }
 
     function renderWaterfallChart() {
-        const thisMonth = new Date().toISOString().slice(0,7);
+        const thisMonth = ymLocal(new Date());
         const data = db.filter(t => t.date.startsWith(thisMonth));
 
         let inc = data.filter(t=>t.type==='income').reduce((a,b)=>a+b.amount,0);
@@ -1561,7 +1573,7 @@
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
         const dayAmounts = {};
-        db.filter(t => t.type==='expense' && t.date.startsWith(today.toISOString().slice(0,7))).forEach(t => {
+        db.filter(t => t.type==='expense' && t.date.startsWith(ymLocal(today))).forEach(t => {
             const d = parseInt(t.date.slice(8,10));
             dayAmounts[d] = (dayAmounts[d] || 0) + t.amount;
         });
@@ -1650,7 +1662,7 @@
             raw_data_sample: db.slice(-50),
             smart_metrics: globalSmartMetrics,
             budgets: budgets,
-            goals: goals
+            goals: goals.map(g => ({ name: g.name, target: g.target, saved: goalSaved(g), linkedCat: g.linkedCat || null }))
         };
 
         const prompt = currentLang === 'he'
@@ -2019,7 +2031,7 @@
         // --- כמה חודשי היסטוריה יש בפועל (עד 6 אחרונים, לא כולל החודש הנוכחי) ---
         const histMonths = [];
         for (let i = 1; i <= 6; i++) {
-            histMonths.push(new Date(now.getFullYear(), now.getMonth()-i, 1).toISOString().slice(0,7));
+            histMonths.push(ymOffset(-i));
         }
         const monthsWithData = histMonths.filter(m => db.some(t => t.date.slice(0,7) === m));
         const nMonths = monthsWithData.length || 1;
@@ -2206,80 +2218,192 @@
         document.getElementById('nav-journal').click();
     }
 
+    // ===== יעדי חיסכון עם סנכרון אוטומטי מקטגוריה =====
+    // סכום ההפקדות מהקטגוריה המקושרת (למשל "השקעות ושוק ההון")
+    function linkedSum(catName) {
+        if (!catName) return 0;
+        return db.filter(t => t.cat === catName).reduce((a, b) => a + (Number(b.amount) || 0), 0);
+    }
+    // סך הנחסך ביעד = הפקדות ידניות + כל התנועות בקטגוריה המקושרת
+    function goalSaved(g) { return (Number(g.saved) || 0) + linkedSum(g.linkedCat); }
+
+    function fillGoalLinkSelect(selected) {
+        const sel = document.getElementById('goal-link-cat');
+        if (!sel) return;
+        const none = `<option value="">${currentLang==='he' ? 'ללא — הפקדה ידנית בלבד' : 'None — manual deposits only'}</option>`;
+        const ordered = [...cats].sort((a, b) => (getTxType(b.name)==='transfer') - (getTxType(a.name)==='transfer'));
+        sel.innerHTML = none + ordered.map(c => {
+            const rec = getTxType(c.name)==='transfer' ? (currentLang==='he' ? ' (מומלץ)' : ' (recommended)') : '';
+            return `<option value="${c.name}">${c.name}${rec}</option>`;
+        }).join('');
+        sel.value = selected || '';
+    }
+
+    function openGoalModal() {
+        editingGoalId = null;
+        document.getElementById('goal-name').value = '';
+        document.getElementById('goal-target').value = '';
+        fillGoalLinkSelect('');
+        document.getElementById('goal-modal-title').innerText = currentLang==='he' ? 'יעד חיסכון חדש' : 'New Savings Goal';
+        document.getElementById('goal-modal-save').innerText  = currentLang==='he' ? 'צור יעד' : 'Create Goal';
+        openModal('goal-modal');
+    }
+
+    function closeGoalModal() {
+        editingGoalId = null;
+        closeModal('goal-modal');
+    }
+
+    function editGoal(id) {
+        const g = goals.find(x => String(x.id) === String(id));
+        if (!g) return;
+        editingGoalId = g.id;
+        document.getElementById('goal-name').value = g.name;
+        document.getElementById('goal-target').value = g.target;
+        fillGoalLinkSelect(g.linkedCat || '');
+        document.getElementById('goal-modal-title').innerText = currentLang==='he' ? 'עריכת יעד' : 'Edit Goal';
+        document.getElementById('goal-modal-save').innerText  = currentLang==='he' ? 'עדכן' : 'Update';
+        openModal('goal-modal');
+    }
+
     function renderGoals() {
         const container = document.getElementById('goals-list');
-        const now = new Date();
-        const last3Months = [];
-        for(let i=0; i<3; i++) last3Months.push(new Date(now.getFullYear(), now.getMonth()-i, 1).toISOString().slice(0,7));
+        const last3Months = [0, 1, 2].map(i => ymOffset(-i));
+        // מחלקים במספר החודשים שיש בהם נתונים בפועל, לא ב-3 קבוע
+        const monthsWithData = last3Months.filter(m => db.some(t => t.date && t.date.slice(0,7) === m)).length || 1;
 
-        const savingsData = db.filter(t => last3Months.includes(t.date.slice(0,7)));
+        const savingsData = db.filter(t => t.date && last3Months.includes(t.date.slice(0,7)));
         const inc3 = savingsData.filter(t=>t.type==='income').reduce((a,b)=>a+b.amount,0);
         const exp3 = savingsData.filter(t=>t.type==='expense').reduce((a,b)=>a+b.amount,0);
-        const avgMonthlySaving = Math.max(0, (inc3 - exp3) / 3);
+        const avgMonthlySaving = Math.max(0, (inc3 - exp3) / monthsWithData);
 
         container.innerHTML = goals.map(g => {
-            const pct = Math.min((g.saved / g.target) * 100, 100);
+            const saved  = goalSaved(g);
+            const manual = Number(g.saved) || 0;
+            const pct = g.target > 0 ? Math.min((saved / g.target) * 100, 100) : 0;
+
+            // קצב: ליעד מקושר — קצב ההפקדות לקטגוריה; אחרת — קצב החיסכון הכללי
+            let rate = avgMonthlySaving;
+            if (g.linkedCat) {
+                const linked3 = savingsData.filter(t => t.cat === g.linkedCat).reduce((a,b)=>a+b.amount,0);
+                rate = Math.max(0, linked3 / monthsWithData);
+            }
 
             let projectionText = '';
-            if (avgMonthlySaving > 0 && g.saved < g.target) {
-                const monthsLeft = Math.ceil((g.target - g.saved) / avgMonthlySaving);
-                projectionText = currentLang === 'he' ? `עוד ${monthsLeft} חודשים בקצב הנוכחי! 🚀` : `${monthsLeft} months left at current rate! 🚀`;
-            } else if (g.saved >= g.target) {
+            if (saved >= g.target) {
                 projectionText = currentLang === 'he' ? `הגעת ליעד! 🎉` : `Goal Reached! 🎉`;
+            } else if (rate > 0) {
+                const monthsLeft = Math.ceil((g.target - saved) / rate);
+                projectionText = currentLang === 'he' ? `עוד ${monthsLeft} חודשים בקצב הנוכחי! 🚀` : `${monthsLeft} months left at current rate! 🚀`;
             } else {
                 projectionText = currentLang === 'he' ? `קצב החיסכון אינו מספיק ⚠️` : `Savings rate insufficient ⚠️`;
             }
 
+            const linkBadge = g.linkedCat
+                ? `<div style="font-size:0.75rem; font-weight:700; color:#14b8a6; margin-bottom:10px;">🔗 ${currentLang==='he'?'מסונכרן עם':'Synced with'}: ${g.linkedCat}${manual !== 0 ? ` · ${manual>0?'+':''}${fmtAmount(manual)} ₪ ${currentLang==='he'?'ידני':'manual'}` : ''}</div>`
+                : '';
+            const depLabel = g.linkedCat
+                ? (currentLang === 'he' ? '+ הפקדה ידנית נוספת' : '+ Extra Manual Deposit')
+                : (currentLang === 'he' ? '+ הוספת הפקדה' : '+ Add Deposit');
+
             return `
-                <div class="kpi-card" style="border-top-color:var(--info); text-align:center;">
+                <div class="kpi-card" style="border-top-color:${g.linkedCat ? '#14b8a6' : 'var(--info)'}; text-align:center;">
                     <div style="display:flex; justify-content:space-between; align-items:start;">
                         <h4 style="margin:0; text-align:right;">${g.name}</h4>
-                        <button class="action-btn" onclick="deleteGoal('${g.id}')"><i class="fas fa-trash text-danger"></i></button>
+                        <div>
+                            <button class="action-btn" onclick="editGoal('${g.id}')" title="${currentLang==='he'?'ערוך':'Edit'}" style="color:var(--info);"><i class="fas fa-edit"></i></button>
+                            <button class="action-btn" onclick="deleteGoal('${g.id}')" title="${currentLang==='he'?'מחק':'Delete'}" style="color:var(--danger);"><i class="fas fa-trash"></i></button>
+                        </div>
                     </div>
 
                     <svg viewBox="0 0 36 36" class="circular-chart">
                         <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="circle" stroke="${pct >= 100 ? '#10b981' : '#3b82f6'}" stroke-dasharray="${pct}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="circle" stroke="${pct >= 100 ? '#10b981' : (g.linkedCat ? '#14b8a6' : '#3b82f6')}" stroke-dasharray="${pct}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         <text x="18" y="20.35" class="percentage">${Math.round(pct)}%</text>
                     </svg>
 
-                    <div style="font-size:1.1rem; font-weight:800; margin-bottom:5px;">${Math.round(g.saved).toLocaleString()} / ${Math.round(g.target).toLocaleString()} ₪</div>
-                    <div style="font-size:0.85rem; color:#6b7280; margin-bottom:15px; font-weight:bold;">${projectionText}</div>
+                    <div style="font-size:1.1rem; font-weight:800; margin-bottom:5px;">${fmtAmount(saved)} / ${fmtAmount(g.target)} ₪</div>
+                    <div style="font-size:0.85rem; color:#6b7280; margin-bottom:8px; font-weight:bold;">${projectionText}</div>
+                    ${linkBadge}
 
-                    <button class="btn-primary btn-outline" style="width:100%; font-size:0.8rem;" onclick="depositGoal('${g.id}')">${currentLang === 'he' ? '+ הוספת הפקדה' : '+ Add Deposit'}</button>
+                    <button class="btn-primary btn-outline" style="width:100%; font-size:0.8rem;" onclick="depositGoal('${g.id}')">${depLabel}</button>
                 </div>
             `;
         }).join('');
     }
 
     function addGoal() {
-        const name = document.getElementById('goal-name').value;
+        const name = document.getElementById('goal-name').value.trim();
         const target = parseFloat(document.getElementById('goal-target').value);
-        if(name && target) {
-            goals.push({ id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()), name, target, saved: 0 });
+        const linkedCat = (document.getElementById('goal-link-cat') || {}).value || '';
+
+        if (!name) { showToast(currentLang==='he' ? '⚠️ חסר שם ליעד' : '⚠️ Goal name required'); return; }
+        if (isNaN(target) || target <= 0) { showToast(currentLang==='he' ? '⚠️ סכום היעד חייב להיות חיובי' : '⚠️ Target must be positive'); return; }
+
+        if (editingGoalId) {
+            const g = goals.find(x => String(x.id) === String(editingGoalId));
+            if (!g) { editingGoalId = null; return; }
+            const prevLink = g.linkedCat || '';
+            const manual = Number(g.saved) || 0;
+
+            // קישור חדש ליעד שכבר יש בו סכום ידני — סכנת ספירה כפולה
+            if (linkedCat && linkedCat !== prevLink && manual > 0) {
+                const auto = linkedSum(linkedCat);
+                const msg = currentLang==='he'
+                    ? `ביעד רשום סכום ידני של ${fmtAmount(manual)} ₪.\nהקטגוריה "${linkedCat}" מכילה כבר ${fmtAmount(auto)} ₪ שיסונכרנו אוטומטית.\n\nלאפס את הסכום הידני כדי למנוע ספירה כפולה?\n\nאישור = לאפס (מומלץ אם הסכום הידני הוא אותן הפקדות)\nביטול = להשאיר כתוספת (אם זה כסף שנצבר לפני שהתחלת לתעד)`
+                    : `This goal has ${fmtAmount(manual)} manually recorded.\n"${linkedCat}" already contains ${fmtAmount(auto)} that will sync.\n\nReset the manual amount to avoid double counting?`;
+                if (confirm(msg)) g.saved = 0;
+            }
+            // ניתוק קישור — מקפיאים את הסכום הנוכחי כדי שההתקדמות לא תיעלם
+            if (!linkedCat && prevLink) {
+                g.saved = goalSaved(g);
+                showToast(currentLang==='he' ? 'הקישור בוטל — הסכום הנוכחי נשמר כסכום ידני' : 'Unlinked — current amount kept as manual');
+            }
+
+            g.name = name;
+            g.target = target;
+            g.linkedCat = linkedCat;
+            editingGoalId = null;
             saveData();
+            renderAll();
             closeModal('goal-modal');
-            confetti();
+            showToast(currentLang==='he' ? 'היעד עודכן' : 'Goal updated');
+        } else {
+            goals.push({
+                id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+                name, target, saved: 0, linkedCat
+            });
+            saveData();
+            renderAll();
+            closeModal('goal-modal');
+            if (typeof confetti === 'function') confetti();
         }
     }
 
     function deleteGoal(id) {
         if(confirm(currentLang === 'he' ? 'למחוק את היעד?' : 'Delete goal?')) {
             goals = goals.filter(g => String(g.id) !== String(id));
+            if (String(editingGoalId) === String(id)) editingGoalId = null;
             saveData();
+            renderAll();
         }
     }
 
     function depositGoal(id) {
-        const amt = prompt(currentLang === 'he' ? 'כמה ברצונך להוסיף לחיסכון?' : 'How much to deposit?');
-        if(amt && !isNaN(amt)) {
-            const g = goals.find(x => String(x.id) === String(id));
-            g.saved += parseFloat(amt);
-            saveData();
-            if(g.saved >= g.target) {
-                confetti();
-                alert(currentLang === 'he' ? 'כל הכבוד! הגעת ליעד!' : 'Great job! You reached your goal!');
-            }
+        const g = goals.find(x => String(x.id) === String(id));
+        if (!g) return;
+        const q = g.linkedCat
+            ? (currentLang === 'he' ? `הפקדה ידנית נוספת (מעבר למה שמסונכרן מ"${g.linkedCat}"):` : 'Extra manual deposit:')
+            : (currentLang === 'he' ? 'כמה ברצונך להוסיף לחיסכון?' : 'How much to deposit?');
+        const amt = prompt(q);
+        const v = parseFloat(amt);
+        if (amt === null || isNaN(v)) return;
+        g.saved = (Number(g.saved) || 0) + v;
+        saveData();
+        renderAll();
+        if (goalSaved(g) >= g.target) {
+            if (typeof confetti === 'function') confetti();
+            alert(currentLang === 'he' ? 'כל הכבוד! הגעת ליעד!' : 'Great job! You reached your goal!');
         }
     }
 
@@ -2453,7 +2577,7 @@
 
     function injectDemoDataSilently() {
         const now = new Date();
-        const currM = now.toISOString().slice(0,7);
+        const currM = ymLocal(now);
         const p1 = new Date(now.getFullYear(), now.getMonth()-1, 15).toISOString().slice(0,7);
         const p2 = new Date(now.getFullYear(), now.getMonth()-2, 15).toISOString().slice(0,7);
         const p3 = new Date(now.getFullYear(), now.getMonth()-3, 15).toISOString().slice(0,7);
@@ -2507,7 +2631,7 @@
 
     function runRecurringEngine() {
         const today = new Date();
-        const currentMonth = today.toISOString().slice(0,7);
+        const currentMonth = ymLocal(today);
         let count = 0;
 
         recurring.forEach(s => {
@@ -2606,7 +2730,7 @@
 
     // מעדכן את התנועה שכבר נוצרה אוטומטית החודש, כדי שלא תיווצר כפילות בהרצה הבאה
     function syncRecurringTxThisMonth(oldName, newName, amount, day, cat) {
-        const cm = new Date().toISOString().slice(0,7);
+        const cm = ymLocal(new Date());
         const oldDesc = `🔄 ${oldName}`;
         const newDesc = `🔄 ${newName}`;
         const dim = new Date(parseInt(cm.slice(0,4)), parseInt(cm.slice(5,7)), 0).getDate();
@@ -2652,7 +2776,7 @@
 
     async function exportData() {
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets, dismissedAlerts}, null, 2);
-        const fileName = `pro_finance_diamond_v3.16_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const fileName = `pro_finance_diamond_v3.17_backup_${new Date().toISOString().slice(0,10)}.json`;
 
         if ('showSaveFilePicker' in window) {
             try {
@@ -3005,7 +3129,7 @@
         const totalSaved = income - expense;
         const savRate = income > 0 ? ((totalSaved/income)*100).toFixed(1) : 0;
 
-        const thisMonth = new Date().toISOString().slice(0,7);
+        const thisMonth = ymLocal(new Date());
         const monthExp = db.filter(t=>t.type==='expense' && t.date.startsWith(thisMonth));
         const monthInc = db.filter(t=>t.type==='income' && t.date.startsWith(thisMonth));
         const mExp = monthExp.reduce((a,b)=>a+b.amount,0);
@@ -3044,11 +3168,12 @@
         }).join('');
 
         const goalsHtml = goals.map(g => {
-            const pct = Math.min(Math.round(g.saved/g.target*100),100);
+            const gs = goalSaved(g);
+            const pct = Math.min(Math.round(gs/g.target*100),100);
             return `<div style="margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                     <strong>${g.name}</strong>
-                    <span>${Math.round(g.saved).toLocaleString()} / ${Math.round(g.target).toLocaleString()} ₪ (${pct}%)</span>
+                    <span>${Math.round(gs).toLocaleString()} / ${Math.round(g.target).toLocaleString()} ₪ (${pct}%)${g.linkedCat ? ' · 🔗 ' + g.linkedCat : ''}</span>
                 </div>
                 <div style="background:#e5e7eb; border-radius:4px; height:8px;">
                     <div style="background:#3b82f6; width:${pct}%; height:100%; border-radius:4px;"></div>
@@ -3137,7 +3262,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.16 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.17 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
