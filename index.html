@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <title>PRO-FINANCE DIAMOND V3.22 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.23 + AI Intelligence</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
@@ -88,8 +88,30 @@
         .health-score { width: 70px; height: 70px; border-radius: 50%; border: 5px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 900; transition: all 0.5s; position: relative; }
 
         .health-details { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; text-align: center; }
-        .hd-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; font-size: 0.8rem; }
+        .hd-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; font-size: 0.8rem; position: relative; cursor: help; }
+        .hd-item:hover { background: rgba(255,255,255,0.1); }
         .hd-val { font-weight: bold; font-size: 1.1rem; margin-top: 5px; }
+        .hd-q { display:inline-flex; align-items:center; justify-content:center; width:14px; height:14px; border-radius:50%;
+                background:rgba(255,255,255,0.18); font-size:0.62rem; font-weight:800; vertical-align:middle; margin-right:3px; }
+        .hd-tip { position:absolute; top:calc(100% + 12px); left:50%; transform:translateX(-50%);
+                  width:min(320px, 82vw); background:#fff; color:#1f2937; border-radius:12px; padding:15px 16px;
+                  box-shadow:0 14px 40px rgba(0,0,0,0.45); opacity:0; visibility:hidden; transition:opacity .18s;
+                  z-index:200; text-align:right; font-size:0.76rem; line-height:1.65; font-weight:600; pointer-events:none; }
+        html[dir="ltr"] .hd-tip { text-align:left; }
+        .hd-item:hover .hd-tip, .hd-item.show .hd-tip { opacity:1; visibility:visible; }
+        .hd-details-first .hd-tip { left:auto; right:0; transform:none; }
+        .health-details > .hd-item:first-child .hd-tip { left:auto; right:0; transform:none; }
+        .health-details > .hd-item:last-child  .hd-tip { left:0; right:auto; transform:none; }
+        .hd-tip-h { font-weight:900; font-size:0.85rem; margin-bottom:8px; color:#0f766e; }
+        .hd-tip-f { background:#f3f4f6; border-radius:7px; padding:7px 9px; margin-bottom:9px; font-family:monospace; font-size:0.72rem; color:#374151; }
+        .hd-tip-r { display:flex; justify-content:space-between; gap:12px; padding:3px 0; border-bottom:1px solid #f3f4f6; }
+        .hd-tip-r b { font-weight:800; white-space:nowrap; }
+        .hd-tip-s { margin-top:8px; color:#6b7280; font-size:0.72rem; }
+        .hd-tip-w { margin-top:9px; padding-top:7px; border-top:1px dashed #d1d5db; color:#0f766e; font-weight:800; font-size:0.73rem; }
+        [data-theme="dark"] .hd-tip { background:#1f2937; color:#f9fafb; }
+        [data-theme="dark"] .hd-tip-f { background:rgba(255,255,255,0.06); color:#d1d5db; }
+        [data-theme="dark"] .hd-tip-r { border-color:rgba(255,255,255,0.08); }
+        [data-theme="dark"] .hd-tip-h, [data-theme="dark"] .hd-tip-w { color:#5eead4; }
 
         .ai-insights { padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); }
         .ai-item { display: flex; gap: 12px; margin-bottom: 10px; font-size: 0.9rem; color: #d1d5db; line-height: 1.5; }
@@ -562,7 +584,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.22 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.23 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -1593,90 +1615,174 @@
         if(!anyBudget) container.innerHTML = `<p style="text-align:center; color:#94a3b8; padding:20px;">${currentLang === 'he' ? 'לא הוגדרו תקציבים. ניתן להגדיר בטאב ההגדרות.' : 'No budgets set. You can set them in the Settings tab.'}</p>`;
     }
 
+    // ===== מודל ציון בריאות פיננסית =====
+    // משקלים: חיסכון 35% · תקציב 30% · הוצאות קבועות 20% · יציבות 15%
+    const HEALTH_WEIGHTS = { savings: 0.35, budget: 0.30, fixed: 0.20, stability: 0.15 };
+    const clamp100 = v => Math.max(0, Math.min(100, v));
+    const nis = v => Math.round(v).toLocaleString() + ' ₪';
+
     function updateHealthScore() {
         const today = new Date();
         const thisMonth = ymLocal(today);
-        const monthData = db.filter(t => t.date.startsWith(thisMonth));
+        const lastMonth = ymOffset(-1);
+        const monthData = db.filter(t => t.date && t.date.startsWith(thisMonth));
         const mInc = monthData.filter(t => t.type === 'income').reduce((a,b)=>a+b.amount, 0);
         const mExp = monthData.filter(t => t.type === 'expense').reduce((a,b)=>a+b.amount, 0);
 
-        let finalScore = 0;
+        // בסיס ההכנסה: בתחילת החודש, לפני שהמשכורת נרשמה, mInc הוא כמעט 0
+        // וכל יחס שמחלק בו מתפוצץ. לכן נופלים לממוצע החודשי כשההכנסה החודש חלקית.
+        const avg = calcMonthlyAverages();
+        const usingAvgIncome = avg.avgIncome > 0 && mInc < avg.avgIncome * 0.5;
+        const incomeBasis = usingAvgIncome ? avg.avgIncome : mInc;
+
         let pSavings = 0, pBudget = 0, pStability = 0, pFixed = 0;
+        const d = {};   // פירוט לטולטיפים
 
-        if (mInc > 0 || mExp > 0) {
-            // שיעור חיסכון חודשי — ההעברות להשקעות אינן הוצאה, ולכן אין להוסיפן שוב.
-            let savRate = mInc > 0 ? ((mInc - mExp) / mInc) * 100 : -100;
-            if (savRate > 20) pSavings = 100;
-            else if (savRate > 10) pSavings = 80;
-            else if (savRate > 5) pSavings = 60;
-            else if (savRate > 0) pSavings = 40;
-            else pSavings = 10;
+        // ---------- 1. חיסכון ----------
+        const savRate = incomeBasis > 0 ? ((incomeBasis - mExp) / incomeBasis) * 100 : 0;
+        pSavings = clamp100(savRate / 25 * 100);          // 25%+ חיסכון = 100
+        d.savings = { rate: savRate, inc: incomeBasis, exp: mExp, saved: incomeBasis - mExp };
 
-            const spending = {};
-            monthData.filter(t => t.type === 'expense').forEach(t => spending[t.cat] = (spending[t.cat] || 0) + t.amount);
-            let catsWithBudget = 0;
-            let catsUnderBudget = 0;
-            cats.forEach(c => {
-                const limit = budgets[c.name] || 0;
-                if (limit > 0) {
-                    catsWithBudget++;
-                    if ((spending[c.name] || 0) <= limit) catsUnderBudget++;
-                }
-            });
-            pBudget = catsWithBudget > 0 ? (catsUnderBudget / catsWithBudget) * 100 : 70;
-
-            const lastMonth = ymOffset(-1);
-            const lastMonthExp = db.filter(t => t.type==='expense' && t.date.startsWith(lastMonth)).reduce((a,b)=>a+b.amount,0);
-            if (lastMonthExp > 0) {
-                const variance = Math.abs(mExp - lastMonthExp) / lastMonthExp;
-                if (variance < 0.1) pStability = 100;
-                else if (variance < 0.2) pStability = 80;
-                else if (variance < 0.4) pStability = 50;
-                else pStability = 20;
-            } else {
-                pStability = 70;
-            }
-
-            const recurringNames = recurring.map(r => `🔄 ${r.name}`);
-            let fixedSpend = monthData.filter(t => t.type==='expense' && (recurringNames.includes(t.desc) || (t.tags && t.tags.includes('הוראת קבע')))).reduce((a,b)=>a+b.amount,0);
-            let totalExpectedFixed = recurring.reduce((a,b)=>a+parseFloat(b.amount),0);
-            let maxFixed = Math.max(fixedSpend, totalExpectedFixed);
-
-            let fixedRatio = mInc > 0 ? (maxFixed / mInc) * 100 : 100;
-            if (fixedRatio < 30) pFixed = 100;
-            else if (fixedRatio < 50) pFixed = 80;
-            else if (fixedRatio < 70) pFixed = 50;
-            else pFixed = 20;
-
-            finalScore = Math.round((0.35 * pSavings) + (0.30 * pBudget) + (0.20 * pStability) + (0.15 * pFixed));
+        // ---------- 2. תקציב (משוקלל בסכומים, לא בינארי) ----------
+        const spending = {};
+        monthData.filter(t => t.type === 'expense').forEach(t => spending[t.cat] = (spending[t.cat] || 0) + t.amount);
+        let totalBudget = 0, overspend = 0, overCats = [], catsWithBudget = 0;
+        cats.forEach(c => {
+            const limit = budgets[c.name] || 0;
+            if (limit <= 0) return;
+            catsWithBudget++;
+            totalBudget += limit;
+            const over = (spending[c.name] || 0) - limit;
+            if (over > 0) { overspend += over; overCats.push({ name: c.name, over }); }
+        });
+        if (catsWithBudget === 0) { pBudget = 70; d.budget = { none: true }; }
+        else {
+            const overRatio = totalBudget > 0 ? overspend / totalBudget : 0;
+            pBudget = clamp100(100 - overRatio * 200);     // כל 1% חריגה מהתקציב הכולל = 2 נקודות
+            d.budget = { totalBudget, overspend, overRatio: overRatio * 100,
+                         overCats: overCats.sort((x,y)=>y.over-x.over).slice(0,3), catsWithBudget };
         }
+
+        // ---------- 3. יציבות (השוואה הוגנת: אותו מספר ימים) ----------
+        const dayNow = today.getDate();
+        const dimLast = new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+        const cutoff = Math.min(dayNow, dimLast);
+        const lastPartial = db.filter(t => t.type === 'expense' && t.date &&
+            t.date.startsWith(lastMonth) && parseInt(t.date.slice(8,10), 10) <= cutoff)
+            .reduce((a,b)=>a+b.amount, 0);
+        if (lastPartial > 0) {
+            const variance = Math.abs(mExp - lastPartial) / lastPartial;
+            pStability = Math.max(20, clamp100(100 - variance * 200));
+            d.stability = { cur: mExp, prev: lastPartial, variance: variance * 100, cutoff, partial: true };
+        } else {
+            pStability = 70;
+            d.stability = { noData: true, cutoff };
+        }
+
+        // ---------- 4. הוצאות קבועות ----------
+        const recurringNames = recurring.map(r => `🔄 ${r.name}`);
+        const fixedSpend = monthData.filter(t => t.type==='expense' &&
+            (recurringNames.includes(t.desc) || (t.tags && t.tags.includes('הוראת קבע')))).reduce((a,b)=>a+b.amount,0);
+        const expectedFixed = recurring.reduce((a,b)=>a+parseFloat(b.amount || 0),0);
+        const maxFixed = Math.max(fixedSpend, expectedFixed);
+        const fixedRatio = incomeBasis > 0 ? maxFixed / incomeBasis : 1;
+        pFixed = clamp100((0.70 - fixedRatio) / (0.70 - 0.20) * 100);   // 20% ומטה = 100, 70% ומעלה = 0
+        d.fixed = { fixed: maxFixed, inc: incomeBasis, ratio: fixedRatio * 100, count: recurring.length };
+
+        const hasData = (mInc > 0 || mExp > 0);
+        const finalScore = hasData ? Math.round(
+            HEALTH_WEIGHTS.savings   * pSavings +
+            HEALTH_WEIGHTS.budget    * pBudget +
+            HEALTH_WEIGHTS.fixed     * pFixed +
+            HEALTH_WEIGHTS.stability * pStability) : 0;
 
         globalSmartMetrics.healthScore = finalScore;
         globalSmartMetrics.savingsScore = pSavings;
         globalSmartMetrics.budgetScore = pBudget;
+        globalSmartMetrics.stabilityScore = pStability;
+        globalSmartMetrics.fixedScore = pFixed;
+        globalSmartMetrics.usingAvgIncome = usingAvgIncome;
 
         const el = document.getElementById('health-score');
         const txt = document.getElementById('health-text');
-
         if (el) {
-            el.innerText = finalScore > 0 ? finalScore : '--';
+            el.innerText = hasData ? finalScore : '--';
             el.style.borderColor = finalScore >= 80 ? 'var(--success)' : (finalScore >= 60 ? 'var(--warning)' : 'var(--danger)');
         }
-
-        if (txt && finalScore > 0) {
-            if(finalScore >= 80) txt.innerText = currentLang === 'he' ? "מצוין!" : "Excellent!";
-            else if(finalScore >= 60) txt.innerText = currentLang === 'he' ? "במצב טוב, יש מקום לשיפור" : "Good, room for improvement";
-            else txt.innerText = currentLang === 'he' ? "דורש התערבות מיידית" : "Needs Immediate Attention";
+        if (txt && hasData) {
+            const base = finalScore >= 80 ? (currentLang==='he' ? 'מצוין!' : 'Excellent!')
+                       : finalScore >= 60 ? (currentLang==='he' ? 'במצב טוב, יש מקום לשיפור' : 'Good, room for improvement')
+                                          : (currentLang==='he' ? 'דורש התערבות מיידית' : 'Needs Immediate Attention');
+            txt.innerText = base + (usingAvgIncome
+                ? (currentLang==='he' ? ' · מחושב מול ההכנסה הממוצעת (המשכורת החודש טרם נרשמה)' : ' · based on average income')
+                : '');
         }
 
-        const detailsBox = document.getElementById('health-details-box');
-        if (detailsBox && finalScore > 0) {
-            detailsBox.innerHTML = `
-                <div class="hd-item">${currentLang==='he'?'חיסכון':'Savings'}<div class="hd-val" style="color:${pSavings>=80?'var(--success)':'var(--warning)'}">${Math.round(pSavings)}</div></div>
-                <div class="hd-item">${currentLang==='he'?'תקציב':'Budget'}<div class="hd-val" style="color:${pBudget>=80?'var(--success)':'var(--warning)'}">${Math.round(pBudget)}</div></div>
-                <div class="hd-item">${currentLang==='he'?'יציבות':'Stability'}<div class="hd-val" style="color:${pStability>=80?'var(--success)':'var(--warning)'}">${Math.round(pStability)}</div></div>
-                <div class="hd-item">${currentLang==='he'?'קבועות':'Fixed'}<div class="hd-val" style="color:${pFixed>=80?'var(--success)':'var(--warning)'}">${Math.round(pFixed)}</div></div>
-            `;
+        const box = document.getElementById('health-details-box');
+        if (box && hasData) {
+            const he = currentLang === 'he';
+            const w = HEALTH_WEIGHTS;
+            const incNote = usingAvgIncome
+                ? `<div style="color:#fbbf24;">⚠ ${he?'ההכנסה החודש חלקית — מחושב מול ממוצע של':'Partial income — using average of'} ${nis(incomeBasis)}</div>` : '';
+
+            // --- חיסכון ---
+            const tipSav = `
+                <div class="hd-tip-h">${he?'איך מחושב ציון החיסכון':'How savings is scored'}</div>
+                <div class="hd-tip-f">${he?'(הכנסות − הוצאות) ÷ הכנסות':'(income − expenses) ÷ income'}</div>
+                <div class="hd-tip-r"><span>${he?'הכנסות':'Income'}</span><b>${nis(d.savings.inc)}</b></div>
+                <div class="hd-tip-r"><span>${he?'הוצאות':'Expenses'}</span><b>${nis(d.savings.exp)}</b></div>
+                <div class="hd-tip-r"><span>${he?'נחסך':'Saved'}</span><b>${nis(d.savings.saved)}</b></div>
+                <div class="hd-tip-r"><span>${he?'שיעור חיסכון':'Savings rate'}</span><b>${d.savings.rate.toFixed(1)}%</b></div>
+                ${incNote}
+                <div class="hd-tip-s">${he?'סולם: 0% ← 0 נקודות · 25% ומעלה ← 100':'Scale: 0% → 0 · 25%+ → 100'}</div>
+                <div class="hd-tip-w">${he?'משקל':'Weight'} ${w.savings*100}% · ${he?'תרומה לציון':'contributes'} ${(w.savings*pSavings).toFixed(1)}</div>`;
+
+            // --- תקציב ---
+            const tipBud = d.budget.none
+                ? `<div class="hd-tip-h">${he?'תקציב':'Budget'}</div><div>${he?'לא הוגדרו תקציבים — ניתן ציון ברירת מחדל 70.':'No budgets set — default 70.'}</div>`
+                : `<div class="hd-tip-h">${he?'איך מחושב ציון התקציב':'How budget is scored'}</div>
+                   <div class="hd-tip-f">${he?'100 − (סך החריגה ÷ סך התקציב) × 200':'100 − (overspend ÷ total budget) × 200'}</div>
+                   <div class="hd-tip-r"><span>${he?'תקציב כולל':'Total budget'}</span><b>${nis(d.budget.totalBudget)}</b></div>
+                   <div class="hd-tip-r"><span>${he?'סך החריגה':'Total overspend'}</span><b style="color:${d.budget.overspend>0?'#ef4444':'#10b981'}">${nis(d.budget.overspend)}</b></div>
+                   <div class="hd-tip-r"><span>${he?'שיעור חריגה':'Overspend ratio'}</span><b>${d.budget.overRatio.toFixed(1)}%</b></div>
+                   ${d.budget.overCats.length ? `<div class="hd-tip-s">${he?'החורגות:':'Over:'} ${d.budget.overCats.map(c=>`${c.name} (+${nis(c.over)})`).join(' · ')}</div>` : `<div class="hd-tip-s" style="color:#10b981;">${he?'אין חריגות החודש ✅':'No overspend ✅'}</div>`}
+                   <div class="hd-tip-w">${he?'משקל':'Weight'} ${w.budget*100}% · ${he?'תרומה לציון':'contributes'} ${(w.budget*pBudget).toFixed(1)}</div>`;
+
+            // --- יציבות ---
+            const tipStab = d.stability.noData
+                ? `<div class="hd-tip-h">${he?'יציבות':'Stability'}</div><div>${he?'אין נתוני חודש קודם להשוואה — ציון ברירת מחדל 70.':'No prior month — default 70.'}</div>`
+                : `<div class="hd-tip-h">${he?'איך מחושב ציון היציבות':'How stability is scored'}</div>
+                   <div class="hd-tip-f">${he?`השוואת ההוצאות עד יום ${d.stability.cutoff} בחודש, מול אותם ימים בחודש הקודם`:`Expenses through day ${d.stability.cutoff}, vs same days last month`}</div>
+                   <div class="hd-tip-r"><span>${he?'החודש':'This month'}</span><b>${nis(d.stability.cur)}</b></div>
+                   <div class="hd-tip-r"><span>${he?'חודש קודם (אותם ימים)':'Last month (same days)'}</span><b>${nis(d.stability.prev)}</b></div>
+                   <div class="hd-tip-r"><span>${he?'סטייה':'Variance'}</span><b>${d.stability.variance.toFixed(1)}%</b></div>
+                   <div class="hd-tip-s">${he?'סולם: 0% סטייה ← 100 · 40% ומעלה ← 20':'Scale: 0% → 100 · 40%+ → 20'}</div>
+                   <div class="hd-tip-w">${he?'משקל':'Weight'} ${w.stability*100}% · ${he?'תרומה לציון':'contributes'} ${(w.stability*pStability).toFixed(1)}</div>`;
+
+            // --- קבועות ---
+            const tipFix = `
+                <div class="hd-tip-h">${he?'איך מחושב ציון ההוצאות הקבועות':'How fixed costs are scored'}</div>
+                <div class="hd-tip-f">${he?'סך הוראות הקבע ÷ הכנסות':'recurring total ÷ income'}</div>
+                <div class="hd-tip-r"><span>${he?'הוראות קבע':'Recurring'}</span><b>${nis(d.fixed.fixed)} (${d.fixed.count})</b></div>
+                <div class="hd-tip-r"><span>${he?'הכנסות':'Income'}</span><b>${nis(d.fixed.inc)}</b></div>
+                <div class="hd-tip-r"><span>${he?'נטל קבוע':'Fixed burden'}</span><b>${d.fixed.ratio.toFixed(1)}%</b></div>
+                ${incNote}
+                <div class="hd-tip-s">${he?'סולם: 20% ומטה ← 100 · 70% ומעלה ← 0':'Scale: ≤20% → 100 · ≥70% → 0'}</div>
+                <div class="hd-tip-w">${he?'משקל':'Weight'} ${w.fixed*100}% · ${he?'תרומה לציון':'contributes'} ${(w.fixed*pFixed).toFixed(1)}</div>`;
+
+            const cell = (label, score, tip) => {
+                const col = score >= 80 ? 'var(--success)' : (score >= 50 ? 'var(--warning)' : 'var(--danger)');
+                return `<div class="hd-item" onclick="this.classList.toggle('show')">
+                            ${label} <span class="hd-q">?</span>
+                            <div class="hd-val" style="color:${col}">${Math.round(score)}</div>
+                            <div class="hd-tip">${tip}</div>
+                        </div>`;
+            };
+            box.innerHTML =
+                cell(he?'חיסכון':'Savings',   pSavings,   tipSav) +
+                cell(he?'תקציב':'Budget',     pBudget,    tipBud) +
+                cell(he?'יציבות':'Stability', pStability, tipStab) +
+                cell(he?'קבועות':'Fixed',     pFixed,     tipFix);
         }
 
         generateSmartInsights();
@@ -3133,7 +3239,7 @@
 
     async function exportData() {
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets, dismissedAlerts}, null, 2);
-        const fileName = `pro_finance_diamond_v3.22_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const fileName = `pro_finance_diamond_v3.23_backup_${new Date().toISOString().slice(0,10)}.json`;
 
         if ('showSaveFilePicker' in window) {
             try {
@@ -3619,7 +3725,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.22 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.23 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
