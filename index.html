@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <title>PRO-FINANCE DIAMOND V3.24 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.25 + AI Intelligence</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
@@ -584,7 +584,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.24 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.25 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -1140,6 +1140,11 @@
         alertBar.style.display = 'none';
     }
 
+    // תנועה שמקורה בהוראת קבע — לא נכנסת לקצב היומי המשתנה
+    function isFixedTx(t) {
+        return (t.tags && t.tags.includes('הוראת קבע')) || (t.desc && t.desc.startsWith('🔄'));
+    }
+
     function calculatePrediction(thisMonth) {
         const today = new Date();
         const daysElapsed = today.getDate() || 1;
@@ -1152,7 +1157,7 @@
         let variableSpend = 0;
 
         monthTx.forEach(t => {
-            if (recurringNames.includes(t.desc) || (t.tags && t.tags.includes('הוראת קבע'))) {
+            if (recurringNames.includes(t.desc) || isFixedTx(t)) {
                 fixedSpend += t.amount;
             } else {
                 variableSpend += t.amount;
@@ -1167,14 +1172,34 @@
         });
 
         const dailyVariableRate = variableSpend / daysElapsed;
-        const predictedVariable = dailyVariableRate * daysInMonth;
+        const paceVariable = dailyVariableRate * daysInMonth;
+
+        // ממוצע הוצאה משתנה מ-3 החודשים המלאים האחרונים
+        let histTotal = 0, histMonths = 0;
+        for (let i = 1; i <= 3; i++) {
+            const m = ymOffset(-i);
+            const tx = db.filter(t => t.type === 'expense' && t.date && t.date.startsWith(m));
+            if (!tx.length) continue;
+            histMonths++;
+            histTotal += tx.filter(t => !isFixedTx(t)).reduce((a,b)=>a+b.amount, 0);
+        }
+        const histVarAvg = histMonths ? histTotal / histMonths : 0;
+
+        // אקסטרפולציה ליניארית ביום 1 מכפילה כל חיוב פי 31.
+        // לכן משקללים: בתחילת החודש סומכים על ההיסטוריה, ולקראת סופו על הקצב בפועל.
+        const paceWeight = Math.min(1, daysElapsed / daysInMonth);
+        const predictedVariable = histVarAvg > 0
+            ? histVarAvg * (1 - paceWeight) + paceVariable * paceWeight
+            : paceVariable;
+
         const predictedTotalSpend = fixedSpend + pendingFixed + predictedVariable;
 
         globalSmartMetrics.predictedTotalSpend = predictedTotalSpend;
         globalSmartMetrics.dailyVariableRate = dailyVariableRate;
         globalSmartMetrics.pendingFixed = pendingFixed;
+        globalSmartMetrics.predictionBasis = { histVarAvg, paceVariable, paceWeight, histMonths };
 
-        return { predictedTotalSpend, dailyVariableRate };
+        return { predictedTotalSpend, dailyVariableRate, paceWeight, histVarAvg, histMonths };
     }
 
     function renderDashboard() {
@@ -1657,24 +1682,32 @@
         monthData.filter(t => t.type === 'expense').forEach(t => spending[t.cat] = (spending[t.cat] || 0) + t.amount);
         // התקציב מוקצה יחסית לימים שחלפו — אחרת הציון הוא 100 עד שבוע לפני סוף החודש
         // ואז קורס, במקום להתריע בזמן שעוד אפשר לתקן.
+        // שתי דרגות חומרה:
+        // חריגה אמיתית  = מעבר לתקציב החודשי המלא → עונש כבד (×200)
+        // חריגה מהקצב   = מעבר למכסה היחסית אך עדיין בתוך התקציב החודשי → עונש קל (×50)
+        // בלי ההפרדה, מנוי שיורד ב-1 בחודש נראה כחריגה של 256% ומאפס את הציון.
         const paceRatio = elapsedDays / daysInMonth;
-        let totalBudget = 0, overspend = 0, overCats = [], catsWithBudget = 0;
+        let totalBudget = 0, hardOver = 0, paceOver = 0, overCats = [], paceCats = [], catsWithBudget = 0;
         cats.forEach(c => {
             const limit = budgets[c.name] || 0;
             if (limit <= 0) return;
             catsWithBudget++;
             totalBudget += limit;
-            const allowed = limit * paceRatio;
-            const over = (spending[c.name] || 0) - allowed;
-            if (over > 0) { overspend += over; overCats.push({ name: c.name, over }); }
+            const spent = spending[c.name] || 0;
+            const hard = spent - limit;
+            if (hard > 0) { hardOver += hard; overCats.push({ name: c.name, over: hard }); }
+            const pace = Math.min(spent, limit) - limit * paceRatio;
+            if (pace > 0) { paceOver += pace; paceCats.push({ name: c.name, over: pace }); }
         });
         if (catsWithBudget === 0) { pBudget = 70; d.budget = { none: true }; }
         else {
-            const allowedTotal = totalBudget * paceRatio;
-            const overRatio = allowedTotal > 0 ? overspend / allowedTotal : 0;
-            pBudget = clamp100(100 - overRatio * 200);     // כל 1% חריגה מהמכסה היחסית = 2 נקודות
-            d.budget = { totalBudget, allowedTotal, overspend, overRatio: overRatio * 100,
+            const hardRatio = totalBudget > 0 ? hardOver / totalBudget : 0;
+            const paceRatioOver = totalBudget > 0 ? paceOver / totalBudget : 0;
+            pBudget = clamp100(100 - hardRatio * 200 - paceRatioOver * 50);
+            d.budget = { totalBudget, allowedTotal: totalBudget * paceRatio,
+                         hardOver, paceOver, hardRatio: hardRatio * 100, paceRatioOver: paceRatioOver * 100,
                          overCats: overCats.sort((x,y)=>y.over-x.over).slice(0,3),
+                         paceCats: paceCats.sort((x,y)=>y.over-x.over).slice(0,3),
                          catsWithBudget, elapsedDays, daysInMonth };
         }
 
@@ -1704,12 +1737,23 @@
         pFixed = clamp100((0.70 - fixedRatio) / (0.70 - 0.20) * 100);   // 20% ומטה = 100, 70% ומעלה = 0
         d.fixed = { fixed: maxFixed, inc: incomeBasis, ratio: fixedRatio * 100, count: recurring.length };
 
+        // כשאין בסיס השוואה ליציבות, מנרמלים מחדש את המשקולות בין המדדים הקיימים
+        // במקום להזריק ציון ברירת מחדל שמטה את התוצאה.
+        const stabilityOk = !d.stability.noData;
+        const parts = [
+            { k: 'savings',   score: pSavings,   w: HEALTH_WEIGHTS.savings,   on: true },
+            { k: 'budget',    score: pBudget,    w: HEALTH_WEIGHTS.budget,    on: true },
+            { k: 'fixed',     score: pFixed,     w: HEALTH_WEIGHTS.fixed,     on: true },
+            { k: 'stability', score: pStability, w: HEALTH_WEIGHTS.stability, on: stabilityOk }
+        ];
+        const wSum = parts.filter(x => x.on).reduce((a,x) => a + x.w, 0) || 1;
+        const effW = {};
+        parts.forEach(x => effW[x.k] = x.on ? x.w / wSum : 0);
+        if (!stabilityOk) pStability = null;
+
         const hasData = (mInc > 0 || mExp > 0);
         const finalScore = hasData ? Math.round(
-            HEALTH_WEIGHTS.savings   * pSavings +
-            HEALTH_WEIGHTS.budget    * pBudget +
-            HEALTH_WEIGHTS.fixed     * pFixed +
-            HEALTH_WEIGHTS.stability * pStability) : 0;
+            parts.filter(x => x.on).reduce((a,x) => a + x.score * effW[x.k], 0)) : 0;
 
         globalSmartMetrics.healthScore = finalScore;
         globalSmartMetrics.savingsScore = pSavings;
@@ -1747,34 +1791,36 @@
                 <div class="hd-tip-r"><span>${he?'הכנסות':'Income'}</span><b>${nis(d.savings.inc)}</b></div>
                 <div class="hd-tip-r"><span>${he?(d.savings.projected?'הוצאות (חיזוי לסוף החודש)':'הוצאות'):(d.savings.projected?'Expenses (projected)':'Expenses')}</span><b>${nis(d.savings.exp)}</b></div>
                 ${d.savings.projected ? `<div class="hd-tip-r"><span>${he?'מתוכן בפועל עד היום':'actual so far'}</span><b>${nis(d.savings.actualExp)}</b></div>` : ''}
+                ${d.savings.projected && globalSmartMetrics.predictionBasis && globalSmartMetrics.predictionBasis.histMonths ? `<div class="hd-tip-s" style="margin-top:4px;">${he?`החיזוי משוקלל: ${Math.round((1-globalSmartMetrics.predictionBasis.paceWeight)*100)}% ממוצע היסטורי · ${Math.round(globalSmartMetrics.predictionBasis.paceWeight*100)}% קצב החודש`:`Blend: ${Math.round((1-globalSmartMetrics.predictionBasis.paceWeight)*100)}% history`}</div>` : ''}
                 <div class="hd-tip-r"><span>${he?'נחסך':'Saved'}</span><b>${nis(d.savings.saved)}</b></div>
                 <div class="hd-tip-r"><span>${he?'שיעור חיסכון':'Savings rate'}</span><b>${d.savings.rate.toFixed(1)}%</b></div>
                 ${incNote}
                 <div class="hd-tip-s">${he?'סולם: 0% ← 0 נקודות · 25% ומעלה ← 100<br>מבוסס על כלל 50/30/20 (20% לחיסכון)':'Scale: 0% → 0 · 25%+ → 100<br>Based on the 50/30/20 rule'}</div>
-                <div class="hd-tip-w">${he?'משקל':'Weight'} ${w.savings*100}% · ${he?'תרומה לציון':'contributes'} ${(w.savings*pSavings).toFixed(1)}</div>`;
+                <div class="hd-tip-w">${he?'משקל':'Weight'} ${(effW.savings*100).toFixed(0)}%${effW.savings!==w.savings?(he?' (מנורמל)':' (normalised)'):''} · ${he?'תרומה לציון':'contributes'} ${(effW.savings*(pSavings||0)).toFixed(1)}</div>`;
 
             // --- תקציב ---
             const tipBud = d.budget.none
                 ? `<div class="hd-tip-h">${he?'תקציב':'Budget'}</div><div>${he?'לא הוגדרו תקציבים — ניתן ציון ברירת מחדל 70.':'No budgets set — default 70.'}</div>`
                 : `<div class="hd-tip-h">${he?'איך מחושב ציון התקציב':'How budget is scored'}</div>
-                   <div class="hd-tip-f">${he?'100 − (חריגה ÷ מכסה יחסית) × 200':'100 − (overspend ÷ prorated budget) × 200'}</div>
+                   <div class="hd-tip-f">${he?'100 − (חריגה מהתקציב)×200 − (הקדמת קצב)×50':'100 − (over budget)×200 − (ahead of pace)×50'}</div>
                    <div class="hd-tip-r"><span>${he?'תקציב חודשי':'Monthly budget'}</span><b>${nis(d.budget.totalBudget)}</b></div>
-                   <div class="hd-tip-r"><span>${he?`מכסה עד יום ${d.budget.elapsedDays}/${d.budget.daysInMonth}`:`Allowed by day ${d.budget.elapsedDays}/${d.budget.daysInMonth}`}</span><b>${nis(d.budget.allowedTotal)}</b></div>
-                   <div class="hd-tip-r"><span>${he?'חריגה מהמכסה':'Over the pace'}</span><b style="color:${d.budget.overspend>0?'#ef4444':'#10b981'}">${nis(d.budget.overspend)}</b></div>
-                   <div class="hd-tip-r"><span>${he?'שיעור חריגה':'Overspend ratio'}</span><b>${d.budget.overRatio.toFixed(1)}%</b></div>
-                   ${d.budget.overCats.length ? `<div class="hd-tip-s">${he?'החורגות:':'Over:'} ${d.budget.overCats.map(c=>`${c.name} (+${nis(c.over)})`).join(' · ')}</div>` : `<div class="hd-tip-s" style="color:#10b981;">${he?'אין חריגות החודש ✅':'No overspend ✅'}</div>`}
-                   <div class="hd-tip-w">${he?'משקל':'Weight'} ${w.budget*100}% · ${he?'תרומה לציון':'contributes'} ${(w.budget*pBudget).toFixed(1)}</div>`;
+                   <div class="hd-tip-r"><span>${he?'חריגה מהתקציב החודשי':'Over monthly budget'}</span><b style="color:${d.budget.hardOver>0?'#ef4444':'#10b981'}">${nis(d.budget.hardOver)}</b></div>
+                   <div class="hd-tip-r"><span>${he?`הקדמת קצב (יום ${d.budget.elapsedDays}/${d.budget.daysInMonth})`:`Ahead of pace (day ${d.budget.elapsedDays}/${d.budget.daysInMonth})`}</span><b style="color:${d.budget.paceOver>0?'#f59e0b':'#10b981'}">${nis(d.budget.paceOver)}</b></div>
+                   ${d.budget.overCats.length ? `<div class="hd-tip-s" style="color:#ef4444;">${he?'חורגות מהתקציב:':'Over budget:'} ${d.budget.overCats.map(c=>`${c.name} (+${nis(c.over)})`).join(' · ')}</div>` : `<div class="hd-tip-s" style="color:#10b981;">${he?'אין חריגה מהתקציב החודשי ✅':'No overspend ✅'}</div>`}
+                   ${d.budget.paceCats.length ? `<div class="hd-tip-s" style="color:#f59e0b;">${he?'מקדימות קצב:':'Ahead of pace:'} ${d.budget.paceCats.map(c=>c.name).join(' · ')}</div>` : ''}
+                   <div class="hd-tip-s">${he?'תשלום חודשי שיורד בתחילת החודש נספר כהקדמת קצב בלבד, לא כחריגה.':'A monthly charge early in the month counts only as pace.'}</div>
+                   <div class="hd-tip-w">${he?'משקל':'Weight'} ${(effW.budget*100).toFixed(0)}%${effW.budget!==w.budget?(he?' (מנורמל)':' (normalised)'):''} · ${he?'תרומה לציון':'contributes'} ${(effW.budget*(pBudget||0)).toFixed(1)}</div>`;
 
             // --- יציבות ---
             const tipStab = d.stability.noData
-                ? `<div class="hd-tip-h">${he?'יציבות':'Stability'}</div><div>${he?'אין נתוני חודש קודם להשוואה — ציון ברירת מחדל 70.':'No prior month — default 70.'}</div>`
+                ? `<div class="hd-tip-h">${he?'יציבות':'Stability'}</div><div>${he?'אין בסיס השוואה מספק מהחודש הקודם. המדד הוצא מהחישוב, ומשקלו (15%) חולק יחסית בין שלושת המדדים האחרים.':'Not enough prior-month data. Excluded; its 15% is redistributed.'}</div>`
                 : `<div class="hd-tip-h">${he?'איך מחושב ציון היציבות':'How stability is scored'}</div>
                    <div class="hd-tip-f">${he?`השוואת ההוצאות עד יום ${d.stability.cutoff} בחודש, מול אותם ימים בחודש הקודם`:`Expenses through day ${d.stability.cutoff}, vs same days last month`}</div>
                    <div class="hd-tip-r"><span>${he?'החודש':'This month'}</span><b>${nis(d.stability.cur)}</b></div>
                    <div class="hd-tip-r"><span>${he?'חודש קודם (אותם ימים)':'Last month (same days)'}</span><b>${nis(d.stability.prev)}</b></div>
                    <div class="hd-tip-r"><span>${he?'סטייה':'Variance'}</span><b>${d.stability.variance.toFixed(1)}%</b></div>
                    <div class="hd-tip-s">${he?'סולם: 0% סטייה ← 100 · 40% ומעלה ← 20<br>אין לכך תקן חיצוני — זהו כיול פנימי':'Scale: 0% → 100 · 40%+ → 20<br>No external standard — internal calibration'}</div>
-                   <div class="hd-tip-w">${he?'משקל':'Weight'} ${w.stability*100}% · ${he?'תרומה לציון':'contributes'} ${(w.stability*pStability).toFixed(1)}</div>`;
+                   <div class="hd-tip-w">${he?'משקל':'Weight'} ${(effW.stability*100).toFixed(0)}%${effW.stability!==w.stability?(he?' (מנורמל)':' (normalised)'):''} · ${he?'תרומה לציון':'contributes'} ${(effW.stability*(pStability||0)).toFixed(1)}</div>`;
 
             // --- קבועות ---
             const tipFix = `
@@ -1785,13 +1831,14 @@
                 <div class="hd-tip-r"><span>${he?'נטל קבוע':'Fixed burden'}</span><b>${d.fixed.ratio.toFixed(1)}%</b></div>
                 ${incNote}
                 <div class="hd-tip-s">${he?'סולם: 20% ומטה ← 100 · 70% ומעלה ← 0<br>עוגן: כלל 28/36 ו-50/30/20 (הוצאות חובה עד 50%)':'Scale: ≤20% → 100 · ≥70% → 0<br>Anchored to the 28/36 and 50/30/20 rules'}</div>
-                <div class="hd-tip-w">${he?'משקל':'Weight'} ${w.fixed*100}% · ${he?'תרומה לציון':'contributes'} ${(w.fixed*pFixed).toFixed(1)}</div>`;
+                <div class="hd-tip-w">${he?'משקל':'Weight'} ${(effW.fixed*100).toFixed(0)}%${effW.fixed!==w.fixed?(he?' (מנורמל)':' (normalised)'):''} · ${he?'תרומה לציון':'contributes'} ${(effW.fixed*(pFixed||0)).toFixed(1)}</div>`;
 
             const cell = (label, score, tip) => {
-                const col = score >= 80 ? 'var(--success)' : (score >= 50 ? 'var(--warning)' : 'var(--danger)');
+                const off = (score === null || score === undefined);
+                const col = off ? '#9ca3af' : (score >= 80 ? 'var(--success)' : (score >= 50 ? 'var(--warning)' : 'var(--danger)'));
                 return `<div class="hd-item" onclick="this.classList.toggle('show')">
                             ${label} <span class="hd-q">?</span>
-                            <div class="hd-val" style="color:${col}">${Math.round(score)}</div>
+                            <div class="hd-val" style="color:${col}">${off ? '—' : Math.round(score)}</div>
                             <div class="hd-tip">${tip}</div>
                         </div>`;
             };
@@ -3256,7 +3303,7 @@
 
     async function exportData() {
         const dataStr = JSON.stringify({db, recurring, goals, cats, budgets, dismissedAlerts}, null, 2);
-        const fileName = `pro_finance_diamond_v3.24_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const fileName = `pro_finance_diamond_v3.25_backup_${new Date().toISOString().slice(0,10)}.json`;
 
         if ('showSaveFilePicker' in window) {
             try {
@@ -3742,7 +3789,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.24 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.25 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
