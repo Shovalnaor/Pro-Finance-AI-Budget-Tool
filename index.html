@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <title>PRO-FINANCE DIAMOND V3.25 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.26 + AI Intelligence</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
@@ -64,6 +64,31 @@
 
         .card { background: var(--white); padding: 20px; border-radius: var(--radius); box-shadow: var(--card-shadow); margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.05); }
         .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+
+        /* ===== שוק ההון ===== */
+        .card-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+        .pf-stack { display: flex; height: 40px; border-radius: 10px; overflow: hidden; }
+        .pf-stack div { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 0.8rem; white-space: nowrap; }
+        .pf-trow { margin-bottom: 16px; }
+        .pf-trow .pf-thead { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; }
+        .pf-track { position: relative; height: 12px; background: #e5e7eb; border-radius: 8px; overflow: visible; }
+        [data-theme="dark"] .pf-track { background: #374151; }
+        .pf-fill { position: absolute; top: 0; bottom: 0; right: 0; border-radius: 8px; }
+        html[dir="ltr"] .pf-fill { right: auto; left: 0; }
+        .pf-mark { position: absolute; top: -4px; bottom: -4px; width: 2px; background: #4b5563; border-radius: 2px; }
+        [data-theme="dark"] .pf-mark { background: #e5e7eb; }
+        .pf-todo { background: #fffbeb; border: 2px solid var(--warning); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+        [data-theme="dark"] .pf-todo { background: #78350f; }
+        .pf-note { background: #ecfdf5; border-right: 4px solid var(--primary); border-radius: 8px; padding: 12px 16px; font-size: 0.86rem; }
+        html[dir="ltr"] .pf-note { border-right: none; border-left: 4px solid var(--primary); }
+        [data-theme="dark"] .pf-note { background: #064e3b; }
+        .pf-tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 800; }
+        #pf-table th { padding: 10px 8px; text-align: right; color: #6b7280; font-size: 0.78rem; font-weight: 700; border-bottom: 2px solid #e5e7eb; }
+        html[dir="ltr"] #pf-table th { text-align: left; }
+        #pf-table td { padding: 11px 8px; border-bottom: 1px solid #f1f5f9; }
+        [data-theme="dark"] #pf-table td { border-bottom-color: #374151; }
+        #pf-table tr.pf-cash td { background: rgba(245, 158, 11, 0.09); }
+        #pf-table tr.pf-total td { font-weight: 800; border-bottom: none; border-top: 2px solid #e5e7eb; }
 
         .kpi-card { background: var(--white); padding: 20px; border-radius: var(--radius); box-shadow: var(--card-shadow); border-top: 5px solid #ccc; transition: transform 0.2s; position: relative; }
         .kpi-card:hover { transform: translateY(-3px); }
@@ -229,6 +254,7 @@
         <button class="tab-btn active" onclick="switchTab('tab-dash')" id="nav-dash" data-i18n="navDash">📊 מבט על</button>
         <button class="tab-btn ai-special" onclick="switchTab('tab-ai')" id="nav-ai">🤖 AI Advisor</button>
         <button class="tab-btn" onclick="switchTab('tab-goals')" id="nav-goals" data-i18n="navGoals">🎯 יעדים</button>
+        <button class="tab-btn" onclick="switchTab('tab-portfolio')" id="nav-portfolio" data-i18n="navPortfolio">💼 שוק ההון</button>
         <button class="tab-btn" onclick="switchTab('tab-monthly')" id="nav-monthly" data-i18n="navMonthly">📅 חודשי</button>
         <button class="tab-btn" onclick="switchTab('tab-cat')" id="nav-cat" data-i18n="navCat">🔍 קטגוריות</button>
         <button class="tab-btn" onclick="switchTab('tab-forecast')" id="nav-forecast" data-i18n="navForecast">🔮 תחזית</button>
@@ -483,6 +509,69 @@
             </div>
         </div>
 
+        <!-- ===== שוק ההון / תיק השקעות ===== -->
+        <div id="tab-portfolio" class="tab-pane">
+            <div class="card-grid" id="pf-kpis" style="margin-bottom:20px;"></div>
+
+            <div id="pf-idle-cash"></div>
+
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:6px;">
+                    <h2 style="margin:0;" data-i18n="pfAllocTitle">הקצאת נכסים</h2>
+                    <button class="btn-primary" onclick="openHoldingModal()"><i class="fas fa-plus"></i> <span data-i18n="pfAddHolding">אחזקה חדשה</span></button>
+                </div>
+                <p style="font-size:0.85rem; color:#6b7280; margin:0 0 16px;" data-i18n="pfAllocSub">חלוקת התיק לפי רמת סיכון. העדכון ידני — זה צילום מצב של התיק נכון לרגע שעדכנת.</p>
+                <div id="pf-alloc-bar"></div>
+                <div id="pf-alloc-legend" style="display:flex; flex-wrap:wrap; gap:14px; margin-top:14px; font-size:0.84rem;"></div>
+            </div>
+
+            <div class="card">
+                <h2 style="margin:0 0 6px;" data-i18n="pfTargetTitle">מול הקצאת היעד</h2>
+                <p style="font-size:0.85rem; color:#6b7280; margin:0 0 16px;" data-i18n="pfTargetSub">הגדר את תמהיל היעד שלך. סטייה מעל 5 נקודות אחוז מסומנת בכתום.</p>
+                <div id="pf-targets"></div>
+                <div id="pf-rebalance" style="margin-top:14px;"></div>
+            </div>
+
+            <div class="card-grid-2">
+                <div class="card">
+                    <h3 style="margin:0 0 4px;" data-i18n="pfTrendTitle">שווי התיק לאורך זמן</h3>
+                    <p style="font-size:0.82rem; color:#6b7280; margin:0 0 14px;" data-i18n="pfTrendSub">שווי בפועל מול הפקדות מצטברות — הפער הוא התשואה.</p>
+                    <div class="chart-container" style="height:280px;"><canvas id="c-pf-trend"></canvas></div>
+                    <div id="pf-trend-empty" style="display:none; text-align:center; color:#6b7280; font-size:0.86rem; padding:30px 10px;"></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin:0 0 4px;" data-i18n="pfAccTitle">פילוח לפי חשבון</h3>
+                    <p style="font-size:0.82rem; color:#6b7280; margin:0 0 14px;" data-i18n="pfAccSub">איפה הכסף מוחזק בפועל.</p>
+                    <div class="chart-container" style="height:280px;"><canvas id="c-pf-acc"></canvas></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 style="margin:0 0 4px;" data-i18n="pfTableTitle">פירוט אחזקות</h2>
+                <p style="font-size:0.85rem; color:#6b7280; margin:0 0 16px;" id="pf-table-sub"></p>
+                <div style="overflow-x:auto;"><table id="pf-table" style="width:100%; border-collapse:collapse; font-size:0.88rem;"></table></div>
+            </div>
+
+            <div class="card">
+                <h2 style="margin:0 0 4px;" data-i18n="pfLinkTitle">קרנות ייעודיות — מקושרות ליעדים</h2>
+                <p style="font-size:0.85rem; color:#6b7280; margin:0 0 16px;" data-i18n="pfLinkSub">אחזקה שמקושרת ליעד נספרת אוטומטית בהתקדמות שלו בלשונית "יעדים".</p>
+                <div id="pf-linked"></div>
+                <div id="pf-emergency" style="margin-top:16px;"></div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin:0 0 4px;" data-i18n="pfBaseTitle">הפקדות שקדמו למעקב</h3>
+                <p style="font-size:0.85rem; color:#6b7280; margin:0 0 14px;" data-i18n="pfBaseSub">הרווח מחושב כשווי התיק פחות סך ההפקדות. אם חלק מהכסף הופקד לפני שהתחלת לתעד ביומן — רשום כאן את הסכום, אחרת הרווח יוצג מנופח.</p>
+                <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                    <div class="input-group" style="margin:0; flex:1; min-width:220px;">
+                        <label data-i18n="pfBaseLabel">סך הפקדות היסטוריות (₪)</label>
+                        <input type="number" id="pf-baseline" class="input-control" placeholder="0">
+                    </div>
+                    <button class="btn-primary" onclick="savePortfolioBaseline()" data-i18n="pfBaseSave">שמור</button>
+                </div>
+            </div>
+        </div>
+
         <div id="tab-forecast" class="tab-pane">
             <div class="card" style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color:white;">
                 <div style="display:flex; justify-content:space-around; text-align:center;">
@@ -584,7 +673,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.25 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.26 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -703,6 +792,35 @@
         </div>
     </div>
 
+    <!-- ===== HOLDING MODAL ===== -->
+    <div id="holding-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 id="holding-modal-title">אחזקה חדשה</h3>
+            <div class="input-group"><label data-i18n="modHoldName">שם האחזקה (מדד S&P 500, קרן כספית — חירום...)</label><input id="hold-name" class="input-control"></div>
+            <div class="input-group" style="margin-top:10px;"><label data-i18n="modHoldAcc">חשבון / בית השקעות</label><input id="hold-acc" class="input-control" list="hold-acc-list" placeholder="מיטב טרייד"><datalist id="hold-acc-list"></datalist></div>
+            <div class="input-group" style="margin-top:10px;">
+                <label data-i18n="modHoldType">סוג נכס</label>
+                <select id="hold-type" class="input-control">
+                    <option value="index">מדדים / קרנות סל</option>
+                    <option value="stock">מניות בודדות</option>
+                    <option value="solid">סולידי (קרנות כספיות, אג״ח)</option>
+                    <option value="study">קרן השתלמות / גמל</option>
+                    <option value="cash">מזומן לא מושקע (עו״ש)</option>
+                </select>
+            </div>
+            <div class="input-group" style="margin-top:10px;"><label data-i18n="modHoldValue">שווי נוכחי (₪)</label><input type="number" step="0.01" id="hold-value" class="input-control"></div>
+            <div class="input-group" style="margin-top:10px;">
+                <label data-i18n="modHoldGoal">קישור ליעד חיסכון (אופציונלי)</label>
+                <select id="hold-goal" class="input-control"></select>
+                <div style="font-size:0.75rem; color:#6b7280; margin-top:5px;" data-i18n="modHoldGoalHint">שווי האחזקה ייספר בהתקדמות היעד בלשונית "יעדים".</div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:25px;">
+                <button class="btn-primary" style="flex:1;" id="holding-modal-save" onclick="saveHolding()">הוסף</button>
+                <button class="btn-primary" style="flex:1; background:#f3f4f6; color:#333;" onclick="closeModal('holding-modal')" data-i18n="modBtnCancel">ביטול</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== SMART IMPORT PREVIEW MODAL ===== -->
     <div id="import-modal" class="modal-overlay" style="z-index:11000;">
         <div class="modal-box" style="max-width:1000px; width:96%; max-height:92vh; display:flex; flex-direction:column; padding:22px;">
@@ -785,6 +903,22 @@
     ];
     let budgets = {};
     let dismissedAlerts = [];
+
+    // --- תיק השקעות (שוק ההון) ---
+    // holdings: צילום מצב ידני של התיק. value מתעדכן ע"י המשתמש, לא נמשך מהבורסה.
+    let holdings = [];
+    // portfolio.history: סדרת תמונות מצב {date, total} — נרשמת אוטומטית בכל עדכון אחזקות.
+    // portfolio.baseline: הפקדות שבוצעו לפני שהיומן התחיל, אחרת הרווח יוצג מנופח.
+    let portfolio = { targets: { index: 40, solid: 25, stock: 15, study: 20, cash: 0 }, history: [], baseline: 0 };
+    let editingHoldingId = null;
+
+    const PF_TYPES = {
+        index: { he: 'מדדים',          en: 'Indices',     color: '#3b82f6' },
+        stock: { he: 'מניות בודדות',   en: 'Stocks',      color: '#ef4444' },
+        solid: { he: 'סולידי',         en: 'Fixed income',color: '#8b5cf6' },
+        study: { he: 'השתלמות וגמל',   en: 'Study funds', color: '#10b981' },
+        cash:  { he: 'מזומן',          en: 'Cash',        color: '#f59e0b' }
+    };
 
     let charts = {};
     let currentLang = 'he';
@@ -920,7 +1054,9 @@
             goals: goals,
             cats: cats,
             budgets: budgets,
-            dismissedAlerts: dismissedAlerts
+            dismissedAlerts: dismissedAlerts,
+            holdings: holdings,
+            portfolio: portfolio
         }).then(() => {
             checkBudgetAlerts();
             setTimeout(() => { _isSaving = false; }, 300);
@@ -943,6 +1079,12 @@
                 cats = data.cats || cats;
                 budgets = data.budgets || {};
                 dismissedAlerts = data.dismissedAlerts || [];
+                holdings = data.holdings || [];
+                if (data.portfolio) {
+                    portfolio = Object.assign({ targets: {}, history: [], baseline: 0 }, data.portfolio);
+                    portfolio.targets = Object.assign({ index: 40, solid: 25, stock: 15, study: 20, cash: 0 }, portfolio.targets || {});
+                    portfolio.history = portfolio.history || [];
+                }
             }
             cleanDataSilently();
             runRecurringEngine();
@@ -971,7 +1113,8 @@
                 currentUser = null;
                 document.getElementById('auth-modal').style.display = 'flex';
                 document.getElementById('btn-logout').style.display = 'none';
-                db = []; recurring = []; goals = []; budgets = {};
+                db = []; recurring = []; goals = []; budgets = {}; holdings = [];
+                portfolio = { targets: { index: 40, solid: 25, stock: 15, study: 20, cash: 0 }, history: [], baseline: 0 };
                 renderAll();
             }
         });
@@ -995,7 +1138,7 @@
 
     const translations = {
         he: {
-            navDash: "📊 מבט על", navJournal: "📝 יומן", navMonthly: "📅 חודשי", navCat: "🔍 קטגוריות", navGoals: "🎯 יעדים", navForecast: "🔮 תחזית", navScenario: "💡 סימולטור", navRecurring: "🔄 קבע", navSettings: "⚙️ הגדרות", navAbout: "ℹ️ אודות",
+            navDash: "📊 מבט על", navJournal: "📝 יומן", navMonthly: "📅 חודשי", navCat: "🔍 קטגוריות", navGoals: "🎯 יעדים", navPortfolio: "💼 שוק ההון", navForecast: "🔮 תחזית", navScenario: "💡 סימולטור", navRecurring: "🔄 קבע", navSettings: "⚙️ הגדרות", navAbout: "ℹ️ אודות",
             healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", kpiInvested: "הופנה להשקעות (חיסכון)", kpiSavRate: "שיעור חיסכון כולל", kpiAvgInc: "ממוצע הכנסות חודשי", kpiAvgExp: "ממוצע הוצאות חודשי", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", weeklyBudgetTitle: "מעקב תקציב שבועי", weeklyBudgetHint: "היעד השבועי מחושב מהתקציב החודשי לפי מספר הימים בשבוע הנוכחי.", groupsTitle: "חלוקה לקבוצות הוצאה", groupsHint: "התקציב לכל קבוצה מחושב מסכום תקציבי הקטגוריות שבה.", sixMonthTitle: "סיכום הוצאות לפי קטגוריה — 6 חודשים", trendTitle: "מגמת הכנסות מול הוצאות", waterfallTitle: "זרימת כספים (Waterfall)", heatmapTitle: "מפת חום - הוצאות שבועיות (החודש)",
             aiHeading: "🤖 סוכן אסטרטגיה פיננסית", aiDesc1: "ה-AI ינתח את ההוצאות שלך ויגיד לך את האמת על הניהול הכספי שלך. <strong>הוא מונחה לא להגיד לך מה שאתה רוצה לשמוע</strong>, אלא לבקר בצורה אובייקטיבית וישירה את ההוצאות המיותרות ולתת פתרונות אמיתיים בהתבסס על מודל החיזוי והמדדים הפיננסיים שהמערכת חישבה.", aiBtn: "✨ נתח את התיק הפיננסי שלי מול התחזיות", aiLoading: "משלב נתוני חיזוי למודל LLM אובייקטיבי, נא להמתין...",
             autoCatBadge: "✨ זוהה אוטומטית", addTxTitle: "<i class='fas fa-edit'></i> הוספת תנועה", lblDate: "תאריך", lblDesc: "תיאור העסקה", descPlaceholder: "לדוגמה: ירח דבש בתאילנד...", lblAmount: "סכום", lblCat: "קטגוריה", lblTags: "תגיות (מופרדות בפסיק)", lblInstallments: "תשלומים", btnAdd: "הוסף למערכת", journalTitle: "יומן תנועות מלא", searchPlaceholder: "חיפוש...", opt100: "100 אחרונות", opt500: "500 אחרונות", optAll: "הצג הכל", btnImportExcel: "<i class='fas fa-file-import'></i> ייבוא", thDate: "תאריך", thDesc: "תיאור", thTags: "תגיות", thCat: "קטגוריה", thAmount: "סכום", thActions: "פעולות",
@@ -1016,7 +1159,7 @@
             modRecTitle: "הוספת הוראת קבע", modRecName: "שם הספק (לדוגמה: ארנונה)", modRecAmount: "סכום חודשי", modRecDay: "יום בחודש (1-31)", modRecCat: "קטגוריה", modBtnSave: "שמור", modBtnCancel: "ביטול", modGoalTitle: "יעד חיסכון חדש", modGoalName: "מה המטרה? (חופשה, רכב וכו')", modGoalAmount: "סכום היעד", modGoalBtn: "צור יעד", modGoalLink: "סנכרון אוטומטי מקטגוריה", modGoalLinkHint: "כל תנועה בקטגוריה שנבחרה תיספר אוטומטית כהפקדה ליעד."
         },
         en: {
-            navDash: "📊 Dashboard", navJournal: "📝 Journal", navMonthly: "📅 Monthly", navCat: "🔍 Categories", navGoals: "🎯 Goals", navForecast: "🔮 Forecast", navScenario: "💡 Scenario", navRecurring: "🔄 Recurring", navSettings: "⚙️ Settings", navAbout: "ℹ️ About",
+            navDash: "📊 Dashboard", navJournal: "📝 Journal", navMonthly: "📅 Monthly", navCat: "🔍 Categories", navGoals: "🎯 Goals", navPortfolio: "💼 Markets", navForecast: "🔮 Forecast", navScenario: "💡 Scenario", navRecurring: "🔄 Recurring", navSettings: "⚙️ Settings", navAbout: "ℹ️ About",
             healthTitle: "Financial Health", analyzing: "Analyzing...", kpiInc: "Total Income", kpiExp: "Total Expenses", kpiBal: "Current Balance", kpiInvested: "To Investments (Saved)", kpiSavRate: "Total Savings Rate", kpiAvgInc: "Avg Monthly Income", kpiAvgExp: "Avg Monthly Expenses", kpiMom: "MoM Expense Comparison", budgetStatus: "Monthly Budget Status", weeklyBudgetTitle: "Weekly Budget Tracker", weeklyBudgetHint: "The weekly target is derived from the monthly budget, prorated by days.", groupsTitle: "Expense Groups", groupsHint: "Each group budget is the sum of its category budgets.", sixMonthTitle: "Expenses by Category — 6 Months", trendTitle: "Income vs Expenses Trend", waterfallTitle: "Cash Flow (Waterfall)", heatmapTitle: "Weekly Expense Heatmap (This Month)",
             aiHeading: "🤖 Financial Strategy Agent", aiDesc1: "The AI will analyze your spending and tell you the truth about your financial management. <strong>It is instructed NOT to tell you what you want to hear</strong>, but to objectively and directly criticize unnecessary expenses and provide real solutions.", aiBtn: "✨ Analyze My Financial Portfolio vs Predictions", aiLoading: "Integrating prediction data to objective LLM model, please wait...",
             autoCatBadge: "✨ Auto-Detected", addTxTitle: "<i class='fas fa-edit'></i> Add Transaction", lblDate: "Date", lblDesc: "Description", descPlaceholder: "e.g., Honeymoon in Thailand...", lblAmount: "Amount", lblCat: "Category", lblTags: "Tags (Comma separated)", lblInstallments: "Installments", btnAdd: "Add to System", journalTitle: "Transaction Journal", searchPlaceholder: "Search...", opt100: "Last 100", opt500: "Last 500", optAll: "Show All", btnImportExcel: "<i class='fas fa-file-import'></i> Import", thDate: "Date", thDesc: "Description", thTags: "Tags", thCat: "Category", thAmount: "Amount", thActions: "Actions",
@@ -1056,6 +1199,7 @@
         renderJournal(document.getElementById('journal-search') ? document.getElementById('journal-search').value : '');
         renderSubs();
         renderGoals();
+        renderPortfolio();
         renderCatManager();
         renderBudgetSettings();
         renderStats();
@@ -1086,6 +1230,7 @@
         if(id === 'tab-forecast') setTimeout(renderForecast, 50);
         if(id === 'tab-scenario') setTimeout(renderScenario, 50);
         if(id === 'tab-journal') setTimeout(renderJournal, 50);
+        if(id === 'tab-portfolio') setTimeout(renderPortfolio, 50);
     }
 
     function checkBudgetAlerts() {
@@ -2752,7 +2897,12 @@
         return db.filter(t => t.cat === catName).reduce((a, b) => a + (Number(b.amount) || 0), 0);
     }
     // סך הנחסך ביעד = הפקדות ידניות + כל התנועות בקטגוריה המקושרת
-    function goalSaved(g) { return (Number(g.saved) || 0) + linkedSum(g.linkedCat); }
+    // שווי אחזקות שקושרו ליעד הזה בלשונית שוק ההון
+    function goalHoldings(goalId) {
+        return holdings.filter(h => h.goalId === goalId).reduce((a, h) => a + (Number(h.value) || 0), 0);
+    }
+
+    function goalSaved(g) { return (Number(g.saved) || 0) + linkedSum(g.linkedCat) + goalHoldings(g.id); }
 
     function fillGoalLinkSelect(selected) {
         const sel = document.getElementById('goal-link-cat');
@@ -2829,6 +2979,10 @@
             const linkBadge = g.linkedCat
                 ? `<div style="font-size:0.75rem; font-weight:700; color:#14b8a6; margin-bottom:10px;">🔗 ${currentLang==='he'?'מסונכרן עם':'Synced with'}: ${g.linkedCat}${manual !== 0 ? ` · ${manual>0?'+':''}${fmtAmount(manual)} ₪ ${currentLang==='he'?'ידני':'manual'}` : ''}</div>`
                 : '';
+            const fromHoldings = goalHoldings(g.id);
+            const holdBadge = fromHoldings > 0
+                ? `<div style="font-size:0.75rem; font-weight:700; color:#0f766e; margin-bottom:10px;">💼 ${currentLang==='he'?'מתוכו מקרן ייעודית':'From portfolio'}: ${fmtAmount(fromHoldings)} ₪</div>`
+                : '';
             const depLabel = g.linkedCat
                 ? (currentLang === 'he' ? '+ הפקדה ידנית נוספת' : '+ Extra Manual Deposit')
                 : (currentLang === 'he' ? '+ הוספת הפקדה' : '+ Add Deposit');
@@ -2852,11 +3006,391 @@
                     <div style="font-size:1.1rem; font-weight:800; margin-bottom:5px;">${fmtAmount(saved)} / ${fmtAmount(g.target)} ₪</div>
                     <div style="font-size:0.85rem; color:#6b7280; margin-bottom:8px; font-weight:bold;">${projectionText}</div>
                     ${linkBadge}
+                    ${holdBadge}
 
                     <button class="btn-primary btn-outline" style="width:100%; font-size:0.8rem;" onclick="depositGoal('${g.id}')">${depLabel}</button>
                 </div>
             `;
         }).join('');
+    }
+
+    /* ==========================================================
+       שוק ההון — תיק השקעות
+       ========================================================== */
+
+    function pfTotal()     { return holdings.reduce((a, h) => a + (Number(h.value) || 0), 0); }
+    function pfCash()      { return holdings.filter(h => h.type === 'cash').reduce((a, h) => a + (Number(h.value) || 0), 0); }
+    function pfTypeName(t) { return (PF_TYPES[t] || PF_TYPES.index)[currentLang === 'he' ? 'he' : 'en']; }
+    function pfTypeColor(t){ return (PF_TYPES[t] || PF_TYPES.index).color; }
+
+    // סך ההפקדות = כל התנועות מסוג "העברה" (השקעות) ביומן + הפקדות שקדמו למעקב
+    function pfDeposits(upToDate) {
+        const rows = db.filter(t => t.type === 'transfer' && t.date && (!upToDate || t.date <= upToDate));
+        return (Number(portfolio.baseline) || 0) + rows.reduce((a, t) => a + (Number(t.amount) || 0), 0);
+    }
+
+    // תמונת מצב נרשמת בכל שינוי באחזקות — יום אחד = רשומה אחת (האחרונה גוברת)
+    function pfSnapshot() {
+        const today = new Date();
+        const key = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+        const total = pfTotal();
+        portfolio.history = (portfolio.history || []).filter(s => s.date !== key);
+        if (holdings.length > 0) portfolio.history.push({ date: key, total: total });
+        portfolio.history.sort((a, b) => a.date.localeCompare(b.date));
+        if (portfolio.history.length > 240) portfolio.history = portfolio.history.slice(-240);
+    }
+
+    function openHoldingModal(id) {
+        editingHoldingId = id || null;
+        const h = id ? holdings.find(x => x.id === id) : null;
+
+        document.getElementById('hold-name').value  = h ? h.name : '';
+        document.getElementById('hold-acc').value   = h ? (h.account || '') : '';
+        document.getElementById('hold-type').value  = h ? h.type : 'index';
+        document.getElementById('hold-value').value = h ? h.value : '';
+
+        // רשימת חשבונות קיימים להשלמה אוטומטית
+        const accs = [...new Set(holdings.map(x => x.account).filter(Boolean))];
+        document.getElementById('hold-acc-list').innerHTML = accs.map(a => `<option value="${a}">`).join('');
+
+        const sel = document.getElementById('hold-goal');
+        sel.innerHTML = `<option value="">${currentLang === 'he' ? '— ללא —' : '— None —'}</option>` +
+            goals.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+        sel.value = h ? (h.goalId || '') : '';
+
+        document.getElementById('holding-modal-title').innerText = h
+            ? (currentLang === 'he' ? 'עריכת אחזקה' : 'Edit holding')
+            : (currentLang === 'he' ? 'אחזקה חדשה' : 'New holding');
+        document.getElementById('holding-modal-save').innerText = h
+            ? (currentLang === 'he' ? 'שמור' : 'Save')
+            : (currentLang === 'he' ? 'הוסף' : 'Add');
+
+        openModal('holding-modal');
+    }
+
+    function saveHolding() {
+        const name  = document.getElementById('hold-name').value.trim();
+        const acc   = document.getElementById('hold-acc').value.trim();
+        const type  = document.getElementById('hold-type').value;
+        const value = parseFloat(document.getElementById('hold-value').value);
+        const goalId = document.getElementById('hold-goal').value || '';
+
+        if (!name)                     { showToast(currentLang === 'he' ? '⚠️ חסר שם לאחזקה' : '⚠️ Name required'); return; }
+        if (isNaN(value) || value < 0) { showToast(currentLang === 'he' ? '⚠️ שווי לא תקין' : '⚠️ Invalid value'); return; }
+
+        const stamp = new Date().toISOString().slice(0, 10);
+        if (editingHoldingId) {
+            const h = holdings.find(x => x.id === editingHoldingId);
+            if (h) {
+                // "עודכן" זז רק כששינית את הסכום — אחרת תיקון שם היה מאפס את מונה הימים
+                if (Number(h.value) !== value) h.updated = stamp;
+                Object.assign(h, { name: name, account: acc, type: type, value: value, goalId: goalId });
+            }
+        } else {
+            holdings.push({ id: Date.now().toString(), name: name, account: acc, type: type, value: value, goalId: goalId, updated: stamp });
+        }
+
+        editingHoldingId = null;
+        pfSnapshot();
+        saveData();
+        closeModal('holding-modal');
+        renderPortfolio();
+        renderGoals();
+        showToast(currentLang === 'he' ? '✅ התיק עודכן' : '✅ Portfolio updated');
+    }
+
+    function deleteHolding(id) {
+        const h = holdings.find(x => x.id === id);
+        if (!h) return;
+        if (!confirm(currentLang === 'he' ? `למחוק את "${h.name}" מהתיק?` : `Delete "${h.name}"?`)) return;
+        holdings = holdings.filter(x => x.id !== id);
+        pfSnapshot();
+        saveData();
+        renderPortfolio();
+        renderGoals();
+    }
+
+    function savePortfolioBaseline() {
+        const v = parseFloat(document.getElementById('pf-baseline').value);
+        portfolio.baseline = isNaN(v) ? 0 : v;
+        saveData();
+        renderPortfolio();
+        showToast(currentLang === 'he' ? '✅ נשמר' : '✅ Saved');
+    }
+
+    function setPfTarget(type, val) {
+        const n = parseFloat(val);
+        portfolio.targets[type] = isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
+        saveData();
+        renderPortfolio();
+    }
+
+    function renderPortfolio() {
+        const he = currentLang === 'he';
+        const total = pfTotal();
+        const cash = pfCash();
+        const deposits = pfDeposits();
+        const profit = total - deposits;
+        const bl = document.getElementById('pf-baseline');
+        if (bl && document.activeElement !== bl) bl.value = portfolio.baseline || '';
+
+        // ---------- KPI ----------
+        const kpis = document.getElementById('pf-kpis');
+        const profitKnown = deposits > 0 && total > 0;
+        const profitPct = deposits > 0 ? (profit / deposits * 100) : 0;
+        kpis.innerHTML = `
+            <div class="kpi-card" style="border-top-color:var(--primary);">
+                <h3>${he ? 'שווי תיק כולל' : 'Total value'}</h3>
+                <div class="value" style="color:var(--primary);">${fmtAmount(total)} ₪</div>
+                <div style="font-size:0.78rem; color:#6b7280; margin-top:6px;">${holdings.length} ${he ? 'אחזקות' : 'holdings'}</div>
+            </div>
+            <div class="kpi-card" style="border-top-color:${profitKnown ? (profit >= 0 ? 'var(--success)' : 'var(--danger)') : '#94a3b8'};">
+                <h3>${he ? 'רווח / הפסד' : 'Gain / loss'}</h3>
+                <div class="value" style="color:${profitKnown ? (profit >= 0 ? 'var(--success)' : 'var(--danger)') : '#94a3b8'};">
+                    ${profitKnown ? (profit >= 0 ? '+' : '') + fmtAmount(profit) + ' ₪' : '—'}
+                </div>
+                <div style="font-size:0.78rem; color:#6b7280; margin-top:6px;">
+                    ${profitKnown ? (profitPct >= 0 ? '+' : '') + profitPct.toFixed(1) + '% ' + (he ? 'מסך ההפקדות' : 'of deposits')
+                                  : (he ? 'חסרות הפקדות — ראה "הפקדות שקדמו למעקב"' : 'No deposits recorded yet')}
+                </div>
+            </div>
+            <div class="kpi-card" style="border-top-color:var(--info);">
+                <h3>${he ? 'סך הפקדות' : 'Total deposited'}</h3>
+                <div class="value">${fmtAmount(deposits)} ₪</div>
+                <div style="font-size:0.78rem; color:#6b7280; margin-top:6px;">${he ? 'תנועות "העברה" ביומן' : 'Transfers in journal'}${portfolio.baseline ? (he ? ' + היסטוריה' : ' + baseline') : ''}</div>
+            </div>
+            <div class="kpi-card" style="border-top-color:var(--warning);">
+                <h3>${he ? 'מזומן לא מושקע' : 'Idle cash'}</h3>
+                <div class="value" style="color:${cash > 0 ? 'var(--warning)' : 'inherit'};">${fmtAmount(cash)} ₪</div>
+                <div style="font-size:0.78rem; color:#6b7280; margin-top:6px;">${total > 0 ? (cash / total * 100).toFixed(1) : 0}% ${he ? 'מהתיק' : 'of portfolio'}</div>
+            </div>`;
+
+        // ---------- מזומן תקוע ----------
+        const idle = document.getElementById('pf-idle-cash');
+        const cashRows = holdings.filter(h => h.type === 'cash' && Number(h.value) > 0);
+        if (cashRows.length > 0) {
+            const oldest = cashRows.map(h => h.updated).filter(Boolean).sort()[0];
+            const days = oldest ? Math.max(0, Math.round((Date.now() - new Date(oldest).getTime()) / 86400000)) : 0;
+            idle.innerHTML = `
+                <div class="pf-todo">
+                    <div>
+                        <div style="font-weight:800; font-size:1.05rem; color:#92400e;">⚡ ${he ? 'יש לך מזומן שלא עובד' : 'You have idle cash'}</div>
+                        <div style="font-size:0.84rem; color:#92400e; margin-top:4px;">
+                            ${cashRows.map(h => h.name + (h.account ? ' · ' + h.account : '')).join(' · ')}
+                        </div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-size:1.6rem; font-weight:800; color:var(--warning);">${fmtAmount(cash)} ₪</div>
+                        <div style="font-size:0.76rem; color:#92400e;">${days} ${he ? 'ימים ללא תשואה' : 'days idle'}</div>
+                    </div>
+                </div>`;
+        } else { idle.innerHTML = ''; }
+
+        // ---------- מצב ריק ----------
+        if (holdings.length === 0) {
+            document.getElementById('pf-alloc-bar').innerHTML =
+                `<div style="text-align:center; padding:30px 10px; color:#6b7280;">
+                    ${he ? 'עוד אין אחזקות. לחץ "אחזקה חדשה" כדי להתחיל לתעד את התיק.' : 'No holdings yet. Click "New holding" to start.'}
+                 </div>`;
+            document.getElementById('pf-alloc-legend').innerHTML = '';
+            document.getElementById('pf-targets').innerHTML = '';
+            document.getElementById('pf-rebalance').innerHTML = '';
+            document.getElementById('pf-table').innerHTML = '';
+            document.getElementById('pf-table-sub').innerText = '';
+            document.getElementById('pf-linked').innerHTML = '';
+            document.getElementById('pf-emergency').innerHTML = '';
+            if (charts.pfTrend) { charts.pfTrend.destroy(); charts.pfTrend = null; }
+            if (charts.pfAcc)   { charts.pfAcc.destroy();   charts.pfAcc = null; }
+            document.getElementById('pf-trend-empty').style.display = 'block';
+            document.getElementById('pf-trend-empty').innerText = he ? 'אין עדיין נתונים.' : 'No data yet.';
+            return;
+        }
+
+        // ---------- הקצאה ----------
+        const byType = {};
+        holdings.forEach(h => { byType[h.type] = (byType[h.type] || 0) + (Number(h.value) || 0); });
+        const order = Object.keys(PF_TYPES).filter(t => byType[t] > 0).sort((a, b) => byType[b] - byType[a]);
+
+        document.getElementById('pf-alloc-bar').innerHTML =
+            `<div class="pf-stack">` + order.map(t => {
+                const pct = byType[t] / total * 100;
+                return `<div style="width:${pct}%; background:${pfTypeColor(t)};">${pct >= 7 ? pfTypeName(t) + ' ' + pct.toFixed(0) + '%' : ''}</div>`;
+            }).join('') + `</div>`;
+
+        document.getElementById('pf-alloc-legend').innerHTML = order.map(t => `
+            <span style="display:flex; align-items:center; gap:6px;">
+                <span style="width:11px; height:11px; border-radius:3px; background:${pfTypeColor(t)};"></span>
+                <b>${pfTypeName(t)}</b> · ${fmtAmount(byType[t])} ₪ (${(byType[t] / total * 100).toFixed(1)}%)
+            </span>`).join('');
+
+        // ---------- מול היעד ----------
+        const DEV = 5; // סטייה מותרת בנקודות אחוז
+        const drift = [];
+        document.getElementById('pf-targets').innerHTML = Object.keys(PF_TYPES).map(t => {
+            const actual = total > 0 ? (byType[t] || 0) / total * 100 : 0;
+            const target = Number(portfolio.targets[t]) || 0;
+            const off = Math.abs(actual - target) > DEV;
+            if (off) drift.push({ t: t, actual: actual, target: target });
+            return `
+                <div class="pf-trow">
+                    <div class="pf-thead">
+                        <span>${pfTypeName(t)}</span>
+                        <span style="display:flex; align-items:center; gap:8px;">
+                            <span dir="ltr" style="display:inline-block; color:${off ? 'var(--warning)' : 'var(--success)'}; font-weight:800;">
+                                ${actual.toFixed(0)}% / ${target.toFixed(0)}%${off ? ' ⚠' : ''}
+                            </span>
+                            <input type="number" min="0" max="100" value="${target}" onchange="setPfTarget('${t}', this.value)"
+                                   style="width:62px; padding:4px 6px; font-size:0.78rem; border:1.5px solid #e5e7eb; border-radius:6px; background:var(--white); color:var(--text);"
+                                   title="${he ? 'יעד באחוזים' : 'Target %'}">
+                        </span>
+                    </div>
+                    <div class="pf-track">
+                        <div class="pf-fill" style="width:${Math.min(actual, 100)}%; background:${off ? 'var(--warning)' : pfTypeColor(t)};"></div>
+                        <div class="pf-mark" style="${he ? 'right' : 'left'}:${Math.min(target, 100)}%;"></div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        const tSum = Object.values(portfolio.targets).reduce((a, b) => a + (Number(b) || 0), 0);
+        let rebal = '';
+        if (Math.abs(tSum - 100) > 0.5) {
+            rebal = `<div class="pf-note" style="background:#fef2f2; border-color:var(--danger);">
+                        ⚠️ <b>${he ? 'תמהיל היעד מסתכם ב-' : 'Targets sum to '}${tSum.toFixed(0)}%</b> — ${he ? 'צריך 100% כדי שההשוואה תהיה אמיתית.' : 'should be 100%.'}
+                     </div>`;
+        } else if (drift.length > 0) {
+            const worst = drift.sort((a, b) => Math.abs(b.actual - b.target) - Math.abs(a.actual - a.target))[0];
+            const gap = (worst.actual - worst.target) / 100 * total;
+            rebal = `<div class="pf-note">
+                        💡 <b>${he ? 'איזון מוצע' : 'Suggested rebalance'}:</b>
+                        ${he ? `הסטייה הגדולה ביותר היא ב${pfTypeName(worst.t)} — ${gap > 0 ? 'עודף' : 'חוסר'} של ${fmtAmount(Math.abs(gap))} ₪ מול היעד.`
+                             : `Largest drift is ${pfTypeName(worst.t)} — ${gap > 0 ? 'over' : 'under'} by ${fmtAmount(Math.abs(gap))} ₪.`}
+                     </div>`;
+        } else {
+            rebal = `<div class="pf-note">✅ ${he ? 'התיק מאוזן מול היעד שהגדרת.' : 'Portfolio is on target.'}</div>`;
+        }
+        document.getElementById('pf-rebalance').innerHTML = rebal;
+
+        // ---------- גרף: שווי מול הפקדות ----------
+        const hist = (portfolio.history || []).slice(-24);
+        const emptyBox = document.getElementById('pf-trend-empty');
+        if (charts.pfTrend) { charts.pfTrend.destroy(); charts.pfTrend = null; }
+        if (hist.length < 2) {
+            document.getElementById('c-pf-trend').style.display = 'none';
+            emptyBox.style.display = 'block';
+            emptyBox.innerHTML = he
+                ? 'הגרף ייבנה מעצמו: בכל פעם שתעדכן שווי אחזקה נשמרת תמונת מצב.<br>צריך לפחות שתי נקודות — כרגע יש ' + hist.length + '.'
+                : 'Needs at least two snapshots — currently ' + hist.length + '.';
+        } else {
+            document.getElementById('c-pf-trend').style.display = 'block';
+            emptyBox.style.display = 'none';
+            charts.pfTrend = new Chart(document.getElementById('c-pf-trend'), {
+                type: 'line',
+                data: {
+                    labels: hist.map(s => s.date.slice(8, 10) + '/' + s.date.slice(5, 7)),
+                    datasets: [
+                        { label: he ? 'שווי בפועל' : 'Actual value', data: hist.map(s => s.total),
+                          borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,0.10)', fill: true, tension: 0.3 },
+                        { label: he ? 'הפקדות מצטברות' : 'Cumulative deposits', data: hist.map(s => pfDeposits(s.date)),
+                          borderColor: '#94a3b8', borderDash: [6, 4], fill: false, tension: 0.3, pointRadius: 0 }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: { x: { reverse: he }, y: { ticks: { callback: v => (v / 1000).toFixed(0) + 'K' } } },
+                    plugins: {
+                        tooltip: { rtl: he, callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtAmount(ctx.parsed.y)} ₪` } },
+                        legend: { rtl: he, labels: { boxWidth: 12 } }
+                    }
+                }
+            });
+        }
+
+        // ---------- גרף: לפי חשבון ----------
+        const byAcc = {};
+        holdings.forEach(h => { const k = h.account || (he ? 'ללא חשבון' : 'Unassigned'); byAcc[k] = (byAcc[k] || 0) + (Number(h.value) || 0); });
+        const accPalette = ['#0f766e', '#14b8a6', '#f59e0b', '#3b82f6', '#8b5cf6', '#ef4444', '#84cc16'];
+        if (charts.pfAcc) charts.pfAcc.destroy();
+        charts.pfAcc = new Chart(document.getElementById('c-pf-acc'), {
+            type: 'doughnut',
+            data: { labels: Object.keys(byAcc), datasets: [{ data: Object.values(byAcc), backgroundColor: Object.keys(byAcc).map((_, i) => accPalette[i % accPalette.length]) }] },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { rtl: he, position: 'bottom', labels: { boxWidth: 12 } },
+                    tooltip: { rtl: he, callbacks: { label: ctx => ` ${ctx.label}: ${fmtAmount(ctx.parsed)} ₪ (${(ctx.parsed / total * 100).toFixed(1)}%)` } }
+                }
+            }
+        });
+
+        // ---------- טבלה ----------
+        const sorted = [...holdings].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0));
+        document.getElementById('pf-table-sub').innerText = he
+            ? 'מתעדכן ידנית. עדכון אחרון: ' + (holdings.map(h => h.updated).filter(Boolean).sort().pop() || '—')
+            : 'Manually updated. Last update: ' + (holdings.map(h => h.updated).filter(Boolean).sort().pop() || '—');
+        document.getElementById('pf-table').innerHTML = `
+            <thead><tr>
+                <th>${he ? 'אחזקה' : 'Holding'}</th>
+                <th>${he ? 'חשבון' : 'Account'}</th>
+                <th>${he ? 'סוג' : 'Type'}</th>
+                <th>${he ? 'שווי' : 'Value'}</th>
+                <th>${he ? '% מהתיק' : '% of total'}</th>
+                <th>${he ? 'עודכן' : 'Updated'}</th>
+                <th></th>
+            </tr></thead>
+            <tbody>
+                ${sorted.map(h => {
+                    const v = Number(h.value) || 0;
+                    const g = h.goalId ? goals.find(x => x.id === h.goalId) : null;
+                    return `<tr class="${h.type === 'cash' ? 'pf-cash' : ''}">
+                        <td style="font-weight:700;">${h.name}${g ? `<div style="font-size:0.74rem; color:#14b8a6; font-weight:700;">🔗 ${g.name}</div>` : ''}</td>
+                        <td style="color:#6b7280;">${h.account || '—'}</td>
+                        <td><span class="pf-tag" style="background:${pfTypeColor(h.type)}22; color:${pfTypeColor(h.type)};">${pfTypeName(h.type)}</span></td>
+                        <td style="font-weight:700;">${fmtAmount(v)} ₪</td>
+                        <td>${(v / total * 100).toFixed(1)}%</td>
+                        <td style="color:#6b7280; font-size:0.8rem;">${h.updated || '—'}</td>
+                        <td style="white-space:nowrap;">
+                            <button class="action-btn" style="color:var(--info);" onclick="openHoldingModal('${h.id}')"><i class="fas fa-edit"></i></button>
+                            <button class="action-btn" style="color:var(--danger);" onclick="deleteHolding('${h.id}')"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                }).join('')}
+                <tr class="pf-total">
+                    <td>${he ? 'סה״כ' : 'Total'}</td><td></td><td></td>
+                    <td>${fmtAmount(total)} ₪</td><td>100%</td><td></td><td></td>
+                </tr>
+            </tbody>`;
+
+        // ---------- קרנות ייעודיות ----------
+        const linked = holdings.filter(h => h.goalId && goals.some(g => g.id === h.goalId));
+        document.getElementById('pf-linked').innerHTML = linked.length === 0
+            ? `<div style="color:#6b7280; font-size:0.86rem;">${he ? 'אין עדיין אחזקה מקושרת ליעד. בעריכת אחזקה אפשר לבחור יעד, והשווי ייספר בהתקדמות שלו.' : 'No holding is linked to a goal yet.'}</div>`
+            : linked.map(h => {
+                const g = goals.find(x => x.id === h.goalId);
+                const pct = g.target > 0 ? Math.min(100, (Number(h.value) || 0) / g.target * 100) : 0;
+                return `<div style="display:flex; justify-content:space-between; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid #f1f5f9; flex-wrap:wrap;">
+                    <div>
+                        <div style="font-weight:800;">${g.name}</div>
+                        <div style="font-size:0.8rem; color:#6b7280;">${h.name}${h.account ? ' · ' + h.account : ''} · ${he ? 'יעד' : 'target'}: ${fmtAmount(g.target)} ₪</div>
+                    </div>
+                    <div style="text-align:left;">
+                        <div style="font-weight:800;">${fmtAmount(Number(h.value) || 0)} ₪</div>
+                        <span class="pf-tag" style="background:${pct >= 100 ? '#dcfce7' : '#fef3c7'}; color:${pct >= 100 ? '#166534' : '#92400e'};">${pct.toFixed(0)}% ${he ? 'מהיעד' : 'of target'}</span>
+                    </div>
+                </div>`;
+            }).join('');
+
+        // ---------- כרית ביטחון ----------
+        const liquid = holdings.filter(h => h.type === 'solid' || h.type === 'cash').reduce((a, h) => a + (Number(h.value) || 0), 0);
+        const avg = (typeof calcMonthlyAverages === 'function') ? calcMonthlyAverages() : { avgExpense: 0 };
+        const em = document.getElementById('pf-emergency');
+        if (avg.avgExpense > 0 && liquid > 0) {
+            const months = liquid / avg.avgExpense;
+            em.innerHTML = `<div class="pf-note" style="${months < 3 ? 'background:#fef2f2; border-color:var(--danger);' : ''}">
+                🛟 <b>${he ? 'כרית הביטחון שלך מכסה ' + months.toFixed(1) + ' חודשי מחיה' : 'Emergency buffer covers ' + months.toFixed(1) + ' months'}.</b>
+                ${he ? `נזיל (סולידי + מזומן) ${fmtAmount(liquid)} ₪ חלקי ממוצע הוצאות חודשי ${fmtAmount(avg.avgExpense)} ₪. ${months < 3 ? 'מתחת למינימום המקובל (3 חודשים).' : 'מעל המינימום המקובל (3 חודשים).'}`
+                     : `${fmtAmount(liquid)} ₪ liquid / ${fmtAmount(avg.avgExpense)} ₪ avg monthly spend.`}
+            </div>`;
+        } else { em.innerHTML = ''; }
     }
 
     function addGoal() {
@@ -3789,7 +4323,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.25 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.26 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
