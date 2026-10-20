@@ -4,11 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
+    <!-- SECURITY: CSP. 'unsafe-inline' ב-script-src נדרש כל עוד יש 77 מטפלי onclick ב-HTML.
+         object-src/base-uri/frame-ancestors/connect-src עדיין חוסמים אקספילטרציה ו-clickjacking. -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://www.gstatic.com https://www.googletagmanager.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
+        font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+        img-src 'self' data: blob: https://www.google-analytics.com;
+        connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://www.google-analytics.com;
+        object-src 'none';
+        base-uri 'none';
+        form-action 'none';
+        frame-ancestors 'none'">
     <title>PRO-FINANCE DIAMOND V3.26 + AI Intelligence</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- SECURITY: כל הספריות החיצוניות נעולות לגרסה מדויקת.
+         השלם integrity="sha384-..." לכל שורה לפני העלאה — ראה הוראות במסמך הליווי. -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js" crossorigin="anonymous"></script>
+    <!-- xlsx שודרג מ-0.18.5 (CVE-2023-30533, prototype pollution) ל-0.20.3 מה-CDN הרשמי של SheetJS -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -757,6 +774,9 @@
                     <span id="auth-toggle-text">אין לך חשבון?</span>
                     <a href="#" onclick="toggleAuthMode(); return false;" id="auth-toggle-link" style="color:var(--primary); font-weight:bold; text-decoration:underline;">הרשם עכשיו</a>
                 </div>
+                <div style="font-size:0.85rem; margin-top:4px;">
+                    <a href="#" onclick="handlePasswordReset(); return false;" id="auth-reset-link" style="color:#6b7280; text-decoration:underline;">שכחתי סיסמה</a>
+                </div>
             </div>
         </div>
     </div>
@@ -1033,6 +1053,25 @@
             if(e.code === 'auth/weak-password') msg = 'הסיסמה חלשה מדי (לפחות 6 תווים)';
             errDiv.innerText = msg;
             errDiv.style.display = 'block';
+        }
+    }
+
+    async function handlePasswordReset() {
+        const email = document.getElementById('auth-email').value.trim();
+        const errDiv = document.getElementById('auth-error');
+        errDiv.style.display = 'none';
+        if (!email) {
+            errDiv.innerText = 'הקלד את כתובת האימייל שלך ואז לחץ "שכחתי סיסמה"';
+            errDiv.style.display = 'block';
+            return;
+        }
+        try {
+            await auth.sendPasswordResetEmail(email);
+            showToast('נשלח מייל לאיפוס סיסמה — בדוק גם בספאם');
+        } catch (e) {
+            console.error(e);
+            // לא חושפים אם הכתובת קיימת במערכת (מניעת account enumeration)
+            showToast('אם הכתובת רשומה במערכת, נשלח אליה מייל לאיפוס');
         }
     }
 
@@ -1624,7 +1663,7 @@
             html += `<tr>
                 <td style="font-weight:800;">${currentLang==='he' ? EXPENSE_GROUPS[i].name : EXPENSE_GROUPS[i].nameEn}
                     <div style="font-size:0.72rem; color:#9ca3af; font-weight:600;">${share.toFixed(1)}% ${currentLang==='he'?'מהתקציב הכולל':'of total budget'}</div></td>
-                <td style="font-size:0.8rem; color:#6b7280;">${r.cats.join(' · ') || '—'}</td>
+                <td style="font-size:0.8rem; color:#6b7280;">${esc(r.cats.join(' · ')) || '—'}</td>
                 <td style="text-align:left; font-weight:700;">${fmtAmount(Math.round(r.budget))} ₪</td>
                 <td style="text-align:left; font-weight:800;">${fmtAmount(Math.round(r.actual))} ₪</td>
                 <td style="text-align:left; font-weight:800; color:${col};">${used === null ? '—' : used.toFixed(1) + '%'}</td>
@@ -1683,7 +1722,7 @@
         catRows.forEach(r => {
             // הממוצע מחושב רק על חודשים עם הוצאה בקטגוריה — אחרת קטגוריה עונתית נראית זולה מדי
             const active = months.filter(m => (grid[r.cat][m] || 0) > 0).length || 1;
-            html += `<tr><td style="font-weight:700;"><span class="category-pill" style="color:${getCatColor(r.cat)}; background:${getCatColor(r.cat)}15">${r.cat}</span></td>`;
+            html += `<tr><td style="font-weight:700;"><span class="category-pill" style="color:${getCatColor(r.cat)}; background:${getCatColor(r.cat)}15">${esc(r.cat)}</span></td>`;
             months.forEach((m, i) => {
                 const v = grid[r.cat][m] || 0;
                 colTotals[i] += v;
@@ -1951,8 +1990,8 @@
                    <div class="hd-tip-r"><span>${he?'תקציב חודשי':'Monthly budget'}</span><b>${nis(d.budget.totalBudget)}</b></div>
                    <div class="hd-tip-r"><span>${he?'חריגה מהתקציב החודשי':'Over monthly budget'}</span><b style="color:${d.budget.hardOver>0?'#ef4444':'#10b981'}">${nis(d.budget.hardOver)}</b></div>
                    <div class="hd-tip-r"><span>${he?`הקדמת קצב (יום ${d.budget.elapsedDays}/${d.budget.daysInMonth})`:`Ahead of pace (day ${d.budget.elapsedDays}/${d.budget.daysInMonth})`}</span><b style="color:${d.budget.paceOver>0?'#f59e0b':'#10b981'}">${nis(d.budget.paceOver)}</b></div>
-                   ${d.budget.overCats.length ? `<div class="hd-tip-s" style="color:#ef4444;">${he?'חורגות מהתקציב:':'Over budget:'} ${d.budget.overCats.map(c=>`${c.name} (+${nis(c.over)})`).join(' · ')}</div>` : `<div class="hd-tip-s" style="color:#10b981;">${he?'אין חריגה מהתקציב החודשי ✅':'No overspend ✅'}</div>`}
-                   ${d.budget.paceCats.length ? `<div class="hd-tip-s" style="color:#f59e0b;">${he?'מקדימות קצב:':'Ahead of pace:'} ${d.budget.paceCats.map(c=>c.name).join(' · ')}</div>` : ''}
+                   ${d.budget.overCats.length ? `<div class="hd-tip-s" style="color:#ef4444;">${he?'חורגות מהתקציב:':'Over budget:'} ${d.budget.overCats.map(c=>`${esc(c.name)} (+${nis(c.over)})`).join(' · ')}</div>` : `<div class="hd-tip-s" style="color:#10b981;">${he?'אין חריגה מהתקציב החודשי ✅':'No overspend ✅'}</div>`}
+                   ${d.budget.paceCats.length ? `<div class="hd-tip-s" style="color:#f59e0b;">${he?'מקדימות קצב:':'Ahead of pace:'} ${d.budget.paceCats.map(c=>esc(c.name)).join(' · ')}</div>` : ''}
                    <div class="hd-tip-s">${he?'תשלום חודשי שיורד בתחילת החודש נספר כהקדמת קצב בלבד, לא כחריגה.':'A monthly charge early in the month counts only as pace.'}</div>
                    <div class="hd-tip-w">${he?'משקל':'Weight'} ${(effW.budget*100).toFixed(0)}%${effW.budget!==w.budget?(he?' (מנורמל)':' (normalised)'):''} · ${he?'תרומה לציון':'contributes'} ${(effW.budget*(pBudget||0)).toFixed(1)}</div>`;
 
@@ -2024,7 +2063,7 @@
                 if(t.amount > avg * 3 && t.amount > 100) {
                     foundAnomaly = true;
                     globalSmartMetrics.anomalies.push({desc: t.desc, amt: t.amount, cat: t.cat});
-                    insights.push({ icon: '🔴', text: currentLang === 'he' ? `חריגה: העסקה "${t.desc}" (${t.amount}₪) גבוהה פי 3 מהממוצע בקטגוריה.` : `Anomaly: "${t.desc}" (${t.amount}₪) is 3x higher than average.` });
+                    insights.push({ icon: '🔴', text: currentLang === 'he' ? `חריגה: העסקה "${esc(t.desc)}" (${t.amount}₪) גבוהה פי 3 מהממוצע בקטגוריה.` : `Anomaly: "${esc(t.desc)}" (${t.amount}₪) is 3x higher than average.` });
                 }
             }
         });
@@ -2335,7 +2374,19 @@
                 const data = await resp.json();
                 let text = data.candidates[0].content.parts[0].text;
 
-                document.getElementById('ai-full-response').innerHTML = text.replace(/```html|```/g, '');
+                // SECURITY: פלט ה-LLM הוא קלט לא מהימן (ניתן להשפיע עליו דרך תיאורי עסקאות מיובאים).
+                // מסננים דרך DOMPurify עם allowlist צר לפני הזרקה ל-DOM.
+                const rawAi = text.replace(/```html|```/g, '');
+                const safeAi = (typeof DOMPurify !== 'undefined')
+                    ? DOMPurify.sanitize(rawAi, {
+                        ALLOWED_TAGS: ['p','br','hr','strong','b','em','i','u','ul','ol','li',
+                                       'table','thead','tbody','tr','th','td','h3','h4','h5','span','div','small'],
+                        ALLOWED_ATTR: ['class'],
+                        FORBID_TAGS: ['script','style','iframe','object','embed','form','input','link','base'],
+                        FORBID_ATTR: ['style','onerror','onload','onclick','href','src','srcset','formaction']
+                      })
+                    : esc(rawAi);
+                document.getElementById('ai-full-response').innerHTML = safeAi;
 
                 success = true;
                 log.innerHTML += currentLang === 'he' ? `<br><span style="color:var(--success); font-weight:bold;">הניתוח האובייקטיבי הושלם!</span>` : `<br><span style="color:var(--success); font-weight:bold;">Objective Analysis Complete!</span>`;
@@ -2550,7 +2601,7 @@
 
         document.querySelector('#tbl-monthly tbody').innerHTML = data.sort((a,b)=>new Date(b.date)-new Date(a.date)).map(t => {
             const col = t.type==='income' ? 'var(--success)' : (t.type==='transfer' ? 'var(--info)' : 'var(--danger)');
-            return `<tr><td>${t.date}</td><td><span class="category-pill" style="color:${getCatColor(t.cat)}; background:${getCatColor(t.cat)}15">${t.cat}</span></td><td>${t.desc}</td><td style="font-weight:700; color:${col}">${Math.round(t.amount).toLocaleString()} ₪</td></tr>`;
+            return `<tr><td>${t.date}</td><td><span class="category-pill" style="color:${getCatColor(t.cat)}; background:${getCatColor(t.cat)}15">${esc(t.cat)}</span></td><td>${esc(t.desc)}</td><td style="font-weight:700; color:${col}">${Math.round(t.amount).toLocaleString()} ₪</td></tr>`;
         }).join('');
     }
 
@@ -2577,9 +2628,9 @@
             return `
             <tr style="${isAnomaly ? 'background-color: rgba(239, 68, 68, 0.05);' : ''}">
                 <td>${t.date}</td>
-                <td>${isAnomaly ? '<span class="anomaly-flag" title="Anomaly Detected">🔴</span>' : ''}${t.desc}</td>
-                <td><span style="font-size:0.8rem; color:#8b5cf6;">${t.tags || ''}</span></td>
-                <td><span class="category-pill" style="color:${getCatColor(t.cat)}; background:${getCatColor(t.cat)}15">${t.cat}</span></td>
+                <td>${isAnomaly ? '<span class="anomaly-flag" title="Anomaly Detected">🔴</span>' : ''}${esc(t.desc)}</td>
+                <td><span style="font-size:0.8rem; color:#8b5cf6;">${esc(t.tags)}</span></td>
+                <td><span class="category-pill" style="color:${getCatColor(t.cat)}; background:${getCatColor(t.cat)}15">${esc(t.cat)}</span></td>
                 <td style="font-weight:800; color:${col}">${fmtAmount(t.amount)} ₪</td>
                 <td>
                     <button class="action-btn" onclick="editTx('${t.id}')" title="Edit"><i class="fas fa-edit"></i></button>
@@ -2614,7 +2665,7 @@
         const tagSel = document.getElementById('sel-cat-tag');
         const currTag = tagSel.value;
         tagSel.innerHTML = `<option value="">${currentLang==='he'?'כל התגיות':'All Tags'}</option>` +
-                           Array.from(allTags).filter(x=>x).map(tag => `<option value="${tag}">${tag}</option>`).join('');
+                           Array.from(allTags).filter(x=>x).map(tag => `<option value="${esc(tag)}">${esc(tag)}</option>`).join('');
         tagSel.value = currTag;
 
         let data = db.filter(t => t.cat === cat);
@@ -2690,8 +2741,8 @@
             return `
             <tr>
                 <td>${t.date}</td>
-                <td>${t.desc}</td>
-                <td><span style="font-size:0.8rem; color:#8b5cf6;">${t.tags || ''}</span></td>
+                <td>${esc(t.desc)}</td>
+                <td><span style="font-size:0.8rem; color:#8b5cf6;">${esc(t.tags)}</span></td>
                 <td style="font-weight:bold; color:${col}">${Math.round(t.amount).toLocaleString()} ₪</td>
             </tr>
         `}).join('');
@@ -2911,7 +2962,7 @@
         const ordered = [...cats].sort((a, b) => (getTxType(b.name)==='transfer') - (getTxType(a.name)==='transfer'));
         sel.innerHTML = none + ordered.map(c => {
             const rec = getTxType(c.name)==='transfer' ? (currentLang==='he' ? ' (מומלץ)' : ' (recommended)') : '';
-            return `<option value="${c.name}">${c.name}${rec}</option>`;
+            return `<option value="${esc(c.name)}">${esc(c.name)}${rec}</option>`;
         }).join('');
         sel.value = selected || '';
     }
@@ -2990,7 +3041,7 @@
             return `
                 <div class="kpi-card" style="border-top-color:${g.linkedCat ? '#14b8a6' : 'var(--info)'}; text-align:center;">
                     <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <h4 style="margin:0; text-align:right;">${g.name}</h4>
+                        <h4 style="margin:0; text-align:right;">${esc(g.name)}</h4>
                         <div>
                             <button class="action-btn" onclick="editGoal('${g.id}')" title="${currentLang==='he'?'ערוך':'Edit'}" style="color:var(--info);"><i class="fas fa-edit"></i></button>
                             <button class="action-btn" onclick="deleteGoal('${g.id}')" title="${currentLang==='he'?'מחק':'Delete'}" style="color:var(--danger);"><i class="fas fa-trash"></i></button>
@@ -3055,7 +3106,7 @@
 
         const sel = document.getElementById('hold-goal');
         sel.innerHTML = `<option value="">${currentLang === 'he' ? '— ללא —' : '— None —'}</option>` +
-            goals.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+            goals.map(g => `<option value="${esc(g.id)}">${esc(g.name)}</option>`).join('');
         sel.value = h ? (h.goalId || '') : '';
 
         document.getElementById('holding-modal-title').innerText = h
@@ -3176,7 +3227,7 @@
                     <div>
                         <div style="font-weight:800; font-size:1.05rem; color:#92400e;">⚡ ${he ? 'יש לך מזומן שלא עובד' : 'You have idle cash'}</div>
                         <div style="font-size:0.84rem; color:#92400e; margin-top:4px;">
-                            ${cashRows.map(h => h.name + (h.account ? ' · ' + h.account : '')).join(' · ')}
+                            ${esc(cashRows.map(h => h.name + (h.account ? ' · ' + h.account : '')).join(' · '))}
                         </div>
                     </div>
                     <div style="text-align:center;">
@@ -3342,8 +3393,8 @@
                     const v = Number(h.value) || 0;
                     const g = h.goalId ? goals.find(x => x.id === h.goalId) : null;
                     return `<tr class="${h.type === 'cash' ? 'pf-cash' : ''}">
-                        <td style="font-weight:700;">${h.name}${g ? `<div style="font-size:0.74rem; color:#14b8a6; font-weight:700;">🔗 ${g.name}</div>` : ''}</td>
-                        <td style="color:#6b7280;">${h.account || '—'}</td>
+                        <td style="font-weight:700;">${esc(h.name)}${g ? `<div style="font-size:0.74rem; color:#14b8a6; font-weight:700;">🔗 ${esc(g.name)}</div>` : ''}</td>
+                        <td style="color:#6b7280;">${esc(h.account) || '—'}</td>
                         <td><span class="pf-tag" style="background:${pfTypeColor(h.type)}22; color:${pfTypeColor(h.type)};">${pfTypeName(h.type)}</span></td>
                         <td style="font-weight:700;">${fmtAmount(v)} ₪</td>
                         <td>${(v / total * 100).toFixed(1)}%</td>
@@ -3369,8 +3420,8 @@
                 const pct = g.target > 0 ? Math.min(100, (Number(h.value) || 0) / g.target * 100) : 0;
                 return `<div style="display:flex; justify-content:space-between; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid #f1f5f9; flex-wrap:wrap;">
                     <div>
-                        <div style="font-weight:800;">${g.name}</div>
-                        <div style="font-size:0.8rem; color:#6b7280;">${h.name}${h.account ? ' · ' + h.account : ''} · ${he ? 'יעד' : 'target'}: ${fmtAmount(g.target)} ₪</div>
+                        <div style="font-weight:800;">${esc(g.name)}</div>
+                        <div style="font-size:0.8rem; color:#6b7280;">${esc(h.name)}${h.account ? ' · ' + esc(h.account) : ''} · ${he ? 'יעד' : 'target'}: ${fmtAmount(g.target)} ₪</div>
                     </div>
                     <div style="text-align:left;">
                         <div style="font-weight:800;">${fmtAmount(Number(h.value) || 0)} ₪</div>
@@ -3497,7 +3548,7 @@
             convSel.innerHTML = cats.map(c => {
                 const t = getTxType(c.name);
                 const label = t==='transfer' ? 'העברה' : (t==='income' ? 'הכנסה' : 'הוצאה');
-                return `<option value="${c.name}">${c.name} — ${label}</option>`;
+                return `<option value="${esc(c.name)}">${esc(c.name)} — ${label}</option>`;
             }).join('');
             if (cur) convSel.value = cur;
         }
@@ -3506,7 +3557,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
                 <div style="display:flex; align-items:center; gap:10px;">
                     <input type="color" class="color-circle-input" value="${c.color}" onchange="updateCatColor(${i}, this.value)">
-                    <span style="font-weight:600;">${c.name}</span>
+                    <span style="font-weight:600;">${esc(c.name)}</span>
                 </div>
                 <button class="action-btn" onclick="deleteCat(${i})"><i class="fas fa-times text-danger"></i></button>
             </div>
@@ -3541,8 +3592,8 @@
         const container = document.getElementById('budget-settings-list');
         container.innerHTML = cats.map(c => `
             <div class="card" style="margin:0; padding:15px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                <span style="font-weight:700; font-size:0.9rem;">${c.name}</span>
-                <input type="number" class="input-control budget-setter" data-cat="${c.name}" value="${budgets[c.name] || 0}" style="width:120px; padding:6px;">
+                <span style="font-weight:700; font-size:0.9rem;">${esc(c.name)}</span>
+                <input type="number" class="input-control budget-setter" data-cat="${esc(c.name)}" value="${Number(budgets[c.name]) || 0}" style="width:120px; padding:6px;">
             </div>
         `).join('');
     }
@@ -3556,7 +3607,7 @@
     }
 
     function renderSelects() {
-        const o = cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        const o = cats.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
         ['in-cat', 'sub-cat', 'sel-cat-specific'].forEach(id => {
             const el = document.getElementById(id);
             if(!el) return;
@@ -3586,7 +3637,16 @@
         return 'expense';
     }
 
-    function getCatColor(n) { const c = cats.find(x => x.name === n); return c ? c.color : '#94a3b8'; }
+    // --- SECURITY: HTML escaping for all user-controlled output ---
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function getCatColor(n) { const c = cats.find(x => x.name === n);
+        const col = c && c.color;
+        return (typeof col === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(col)) ? col : '#94a3b8'; }
 
     // מציג סכום עם 2 ספרות אחרי הנקודה רק אם הן קיימות בפועל
     function fmtAmount(n) {
@@ -3814,8 +3874,8 @@
         document.getElementById('subs-list').innerHTML = recurring.map(s => `
             <div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <div>
-                    <div style="font-weight:800;">${s.name}</div>
-                    <div style="font-size:0.8rem; color:#6b7280;">${s.day} ${currentLang === 'he' ? 'בחודש' : 'of month'} | ${s.cat}</div>
+                    <div style="font-weight:800;">${esc(s.name)}</div>
+                    <div style="font-size:0.8rem; color:#6b7280;">${s.day} ${currentLang === 'he' ? 'בחודש' : 'of month'} | ${esc(s.cat)}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
                     <div style="font-weight:800; color:var(--danger);">${fmtAmount(s.amount)} ₪</div>
@@ -3869,13 +3929,30 @@
         if(!file) return;
         const r = new FileReader();
         r.onload = e => {
-            const data = JSON.parse(e.target.result);
-            db = data.db || [];
-            recurring = data.recurring || [];
-            goals = data.goals || [];
-            cats = data.cats || cats;
-            budgets = data.budgets || {};
-            dismissedAlerts = data.dismissedAlerts || [];
+            let data;
+            try {
+                // SECURITY: מסנן __proto__/constructor/prototype כדי למנוע prototype pollution מקובץ גיבוי זדוני
+                data = JSON.parse(e.target.result, (k, v) =>
+                    (k === '__proto__' || k === 'constructor' || k === 'prototype') ? undefined : v);
+            } catch (err) {
+                console.error('Backup parse error:', err);
+                showToast(currentLang === 'he' ? 'קובץ הגיבוי פגום או אינו בפורמט תקין' : 'Backup file is corrupt or invalid');
+                input.value = '';
+                return;
+            }
+            if (!data || typeof data !== 'object' || Array.isArray(data)) {
+                showToast(currentLang === 'he' ? 'מבנה קובץ הגיבוי אינו תקין' : 'Invalid backup structure');
+                input.value = '';
+                return;
+            }
+            db = Array.isArray(data.db) ? data.db : [];
+            recurring = Array.isArray(data.recurring) ? data.recurring : [];
+            goals = Array.isArray(data.goals) ? data.goals : [];
+            cats = Array.isArray(data.cats) && data.cats.length ? data.cats : cats;
+            budgets = (data.budgets && typeof data.budgets === 'object' && !Array.isArray(data.budgets))
+                ? Object.assign(Object.create(null), data.budgets) : {};
+            dismissedAlerts = Array.isArray(data.dismissedAlerts) ? data.dismissedAlerts : [];
+            input.value = '';
             saveData();
         };
         r.readAsText(file);
@@ -4083,13 +4160,13 @@
         document.getElementById('import-summary').innerHTML =
             `מקור מזוהה: <b>${src}</b> · נמצאו <b>${pendingImport.length}</b> רשומות · <b style="color:var(--success)">${newCount}</b> חדשות · <b style="color:#f59e0b">${dupCount}</b> כפולות. עברו על הקטגוריות, שנו מה שצריך, ואשרו.`;
         document.getElementById('import-tbody').innerHTML = pendingImport.map((p,i) => {
-            const catOpts = opts.map(o => `<option value="${o}" ${o===p.cat?'selected':''}>${o}</option>`).join('');
+            const catOpts = opts.map(o => `<option value="${esc(o)}" ${o===p.cat?'selected':''}>${esc(o)}</option>`).join('');
             const sign = p.type === 'income' ? '+' : '-';
             const col = p.type === 'income' ? 'var(--success)' : 'var(--danger)';
             return `<tr style="border-bottom:1px solid #f0f0f0; ${p.dup?'background:#fffbeb;':''}">
                 <td data-label="בחר" style="text-align:center; padding:6px;"><input type="checkbox" ${p.include?'checked':''} onchange="pendingImport[${i}].include=this.checked" style="width:18px;height:18px;"></td>
                 <td data-label="תאריך" style="text-align:center; padding:6px; white-space:nowrap;">${p.date}${p.dup?' <span title="קיים כבר" style="color:#f59e0b;">\u26a0</span>':''}</td>
-                <td data-label="בית עסק" style="text-align:right; padding:6px;">${p.desc}${p.note?` <span style="color:#999;font-size:0.75rem;">(${p.note})</span>`:''}</td>
+                <td data-label="בית עסק" style="text-align:right; padding:6px;">${esc(p.desc)}${p.note?` <span style="color:#999;font-size:0.75rem;">(${esc(p.note)})</span>`:''}</td>
                 <td data-label="סכום" style="text-align:center; padding:6px; font-weight:700; color:${col}; white-space:nowrap;">${sign}${Math.round(p.amount).toLocaleString()} \u20aa</td>
                 <td data-label="סוג" style="text-align:center; padding:6px; font-size:0.78rem;">${p.typeLabel}</td>
                 <td data-label="כרטיס" style="text-align:center; padding:6px; color:#666;">${p.card||'-'}</td>
@@ -4222,8 +4299,8 @@
             const sign = t.type==='income' ? '+' : (t.type==='transfer' ? '→' : '−');
             return `<tr>
             <td style="padding:8px; border-bottom:1px solid #eee;">${t.date}</td>
-            <td style="padding:8px; border-bottom:1px solid #eee;">${t.desc}</td>
-            <td style="padding:8px; border-bottom:1px solid #eee;">${t.cat}</td>
+            <td style="padding:8px; border-bottom:1px solid #eee;">${esc(t.desc)}</td>
+            <td style="padding:8px; border-bottom:1px solid #eee;">${esc(t.cat)}</td>
             <td style="padding:8px; border-bottom:1px solid #eee; font-weight:700; color:${col};">${sign}${Math.round(t.amount).toLocaleString()} ₪</td>
         </tr>`;
         }).join('');
@@ -4233,7 +4310,7 @@
             const pct = Math.min(Math.round(gs/g.target*100),100);
             return `<div style="margin-bottom:12px;">
                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                    <strong>${g.name}</strong>
+                    <strong>${esc(g.name)}</strong>
                     <span>${Math.round(gs).toLocaleString()} / ${Math.round(g.target).toLocaleString()} ₪ (${pct}%)${g.linkedCat ? ' · 🔗 ' + g.linkedCat : ''}</span>
                 </div>
                 <div style="background:#e5e7eb; border-radius:4px; height:8px;">
