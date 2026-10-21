@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f766e">
-    <!-- SECURITY: CSP. 'unsafe-inline' ב-script-src נדרש כל עוד יש 77 מטפלי onclick ב-HTML.
-         object-src/base-uri/frame-ancestors/connect-src עדיין חוסמים אקספילטרציה ו-clickjacking. -->
-    <!-- SECURITY: CSP. הערות:
-         1. frame-ancestors / report-uri / sandbox מתעלמים מהם כשמוסרים דרך <meta> — לא נכללים כאן.
-            הגנת clickjacking ב-GitHub Pages אינה אפשרית ללא HTTP headers.
-         2. 'unsafe-inline' ב-script-src נדרש כל עוד יש onclick= ב-HTML.
-         3. connect-src מפרט במפורש את כל נקודות הקצה של Firebase/Gemini.
-            אם משהו נחסם — הוסף את הדומיין כאן ולא תסיר את כל ה-CSP. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.sheetjs.com https://www.gstatic.com https://www.googletagmanager.com https://*.firebaseio.com https://*.firebasedatabase.app; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https:; connect-src 'self' https://pro-finance-49d4a-default-rtdb.firebaseio.com wss://pro-finance-49d4a-default-rtdb.firebaseio.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app https://*.googleapis.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.firebaseapp.com https://*.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.sheetjs.com; frame-src https://pro-finance-49d4a.firebaseapp.com https://*.firebaseapp.com; object-src 'none'; base-uri 'none'">
+    <!-- SECURITY: CSP מצומצם בכוונה.
+         long-polling של Firebase RTDB יוצר iframe ומזריק <script> אל תת-דומיינים דינמיים
+         (s-gke-*.firebaseio.com), ולכן default-src/script-src/connect-src/frame-src שברו
+         את הסנכרון — בעיקר ב-Safari על iOS, ששם ה-WebSocket נופל ונשענים על long-polling.
+         נשארו רק שתי הדירקטיבות שאינן נוגעות ברשת של Firebase ואינן יכולות לשבור כלום.
+         ההגנה מ-XSS כאן היא esc() ו-DOMPurify, שאינן תלויות ב-CSP. -->
+    <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'">
     <title>PRO-FINANCE DIAMOND V3.26 + AI Intelligence</title>
 
     <!-- SECURITY: כל הספריות החיצוניות נעולות לגרסה מדויקת.
