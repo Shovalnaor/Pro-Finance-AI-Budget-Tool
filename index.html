@@ -11,7 +11,7 @@
          נשארו רק שתי הדירקטיבות שאינן נוגעות ברשת של Firebase ואינן יכולות לשבור כלום.
          ההגנה מ-XSS כאן היא esc() ו-DOMPurify, שאינן תלויות ב-CSP. -->
     <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'">
-    <title>PRO-FINANCE DIAMOND V3.28 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.29 + AI Intelligence</title>
 
     <!-- SECURITY: כל הספריות החיצוניות נעולות לגרסה מדויקת.
          השלם integrity="sha384-..." לכל שורה לפני העלאה — ראה הוראות במסמך הליווי. -->
@@ -189,11 +189,6 @@
         .badge-amber { position: absolute; top: 10px; left: 10px; background: var(--warning); color: white; border-radius: 50%; width: 12px; height: 12px; animation: pulse 1s infinite; }
         html[dir="ltr"] .badge-amber { left: auto; right: 10px; }
 
-        .heatmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-        .heatmap-cell { aspect-ratio: 1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; cursor: pointer; position: relative; color: transparent; transition: 0.2s; }
-        .heatmap-cell:hover { color: #fff; transform: scale(1.1); z-index: 10; font-weight: bold; text-shadow: 0 0 2px #000; }
-        .heatmap-header { text-align: center; font-size: 0.8rem; font-weight: bold; color: #6b7280; margin-bottom: 5px; }
-
         .circular-chart { display: block; margin: 10px auto; max-width: 80%; max-height: 100px; }
         .circle-bg { fill: none; stroke: #eee; stroke-width: 3.8; }
         .circle { fill: none; stroke-width: 2.8; stroke-linecap: round; animation: progress 1s ease-out forwards; }
@@ -333,20 +328,9 @@
                 <div style="overflow-x:auto;"><table id="tbl-six-month" style="font-size:0.88rem; white-space:nowrap;"></table></div>
             </div>
 
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:20px; margin-bottom:20px;">
-                <div class="card" style="margin:0;">
-                    <h3 style="margin-bottom:20px;" data-i18n="trendTitle">מגמת הכנסות מול הוצאות</h3>
-                    <div class="chart-container"><canvas id="chartTrend"></canvas></div>
-                </div>
-                <div class="card" style="margin:0;">
-                    <h3 style="margin-bottom:20px;" data-i18n="waterfallTitle">זרימת כספים (Waterfall)</h3>
-                    <div class="chart-container"><canvas id="chartWaterfall"></canvas></div>
-                </div>
-            </div>
-
             <div class="card">
-                <h3 style="margin-bottom:20px;" data-i18n="heatmapTitle">מפת חום - הוצאות שבועיות (החודש)</h3>
-                <div id="weekly-heatmap" style="width:100%; overflow-x:auto;"></div>
+                <h3 style="margin-bottom:20px;" data-i18n="trendTitle">מגמת הכנסות מול הוצאות</h3>
+                <div class="chart-container"><canvas id="chartTrend"></canvas></div>
             </div>
         </div>
 
@@ -684,7 +668,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.28 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.29 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -1180,7 +1164,7 @@
     const translations = {
         he: {
             navDash: "📊 מבט על", navJournal: "📝 יומן", navMonthly: "📅 חודשי", navCat: "🔍 קטגוריות", navGoals: "🎯 יעדים", navPortfolio: "💼 שוק ההון", navForecast: "🔮 תחזית", navScenario: "💡 סימולטור", navRecurring: "🔄 קבע", navSettings: "⚙️ הגדרות", navAbout: "ℹ️ אודות",
-            healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", kpiInvested: "הופנה להשקעות (חיסכון)", kpiSavRate: "שיעור חיסכון כולל", kpiAvgInc: "ממוצע הכנסות חודשי", kpiAvgExp: "ממוצע הוצאות חודשי", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", weeklyBudgetTitle: "מעקב תקציב שבועי", weeklyBudgetHint: "היעד השבועי מחושב מהתקציב החודשי לפי מספר הימים בשבוע הנוכחי.", groupsTitle: "חלוקה לקבוצות הוצאה", groupsHint: "התקציב לכל קבוצה מחושב מסכום תקציבי הקטגוריות שבה.", sixMonthTitle: "סיכום הוצאות לפי קטגוריה — 6 חודשים", trendTitle: "מגמת הכנסות מול הוצאות", waterfallTitle: "זרימת כספים (Waterfall)", heatmapTitle: "מפת חום - הוצאות שבועיות (החודש)",
+            healthTitle: "בריאות פיננסית", analyzing: "מנתח נתונים...", kpiInc: "הכנסות מצטברות", kpiExp: "הוצאות מצטברות", kpiBal: "יתרה נוכחית", kpiInvested: "הופנה להשקעות (חיסכון)", kpiSavRate: "שיעור חיסכון כולל", kpiAvgInc: "ממוצע הכנסות חודשי", kpiAvgExp: "ממוצע הוצאות חודשי", kpiMom: "השוואה לחודש קודם (הוצאות)", budgetStatus: "מעקב תקציב חודשי", weeklyBudgetTitle: "מעקב תקציב שבועי", weeklyBudgetHint: "היעד השבועי מחושב מהתקציב החודשי לפי מספר הימים בשבוע הנוכחי.", groupsTitle: "חלוקה לקבוצות הוצאה", groupsHint: "התקציב לכל קבוצה מחושב מסכום תקציבי הקטגוריות שבה.", sixMonthTitle: "סיכום הוצאות לפי קטגוריה — 6 חודשים", trendTitle: "מגמת הכנסות מול הוצאות", 
             aiHeading: "🤖 סוכן אסטרטגיה פיננסית", aiDesc1: "ה-AI ינתח את ההוצאות שלך ויגיד לך את האמת על הניהול הכספי שלך. <strong>הוא מונחה לא להגיד לך מה שאתה רוצה לשמוע</strong>, אלא לבקר בצורה אובייקטיבית וישירה את ההוצאות המיותרות ולתת פתרונות אמיתיים בהתבסס על מודל החיזוי והמדדים הפיננסיים שהמערכת חישבה.", aiBtn: "✨ נתח את התיק הפיננסי שלי מול התחזיות", aiLoading: "משלב נתוני חיזוי למודל LLM אובייקטיבי, נא להמתין...",
             autoCatBadge: "✨ זוהה אוטומטית", addTxTitle: "<i class='fas fa-edit'></i> הוספת תנועה", lblDate: "תאריך", lblDesc: "תיאור העסקה", descPlaceholder: "לדוגמה: ירח דבש בתאילנד...", lblAmount: "סכום", lblCat: "קטגוריה", lblTags: "תגיות (מופרדות בפסיק)", lblInstallments: "תשלומים", btnAdd: "הוסף למערכת", journalTitle: "יומן תנועות מלא", searchPlaceholder: "חיפוש...", opt100: "100 אחרונות", opt500: "500 אחרונות", optAll: "הצג הכל", btnImportExcel: "<i class='fas fa-file-import'></i> ייבוא", thDate: "תאריך", thDesc: "תיאור", thTags: "תגיות", thCat: "קטגוריה", thAmount: "סכום", thActions: "פעולות",
             monthlyDetailTitle: "ניתוח חודשי מפורט", monthInc: "הכנסות", monthExp: "הוצאות", monthBal: "יתרה", monthInvested: "הופנה להשקעות (חיסכון)", chartDaily: "פילוח לפי ימים", chartCat: "פילוח קטגוריות", chartCatBar: "הוצאות לפי קטגוריה",
@@ -1201,7 +1185,7 @@
         },
         en: {
             navDash: "📊 Dashboard", navJournal: "📝 Journal", navMonthly: "📅 Monthly", navCat: "🔍 Categories", navGoals: "🎯 Goals", navPortfolio: "💼 Markets", navForecast: "🔮 Forecast", navScenario: "💡 Scenario", navRecurring: "🔄 Recurring", navSettings: "⚙️ Settings", navAbout: "ℹ️ About",
-            healthTitle: "Financial Health", analyzing: "Analyzing...", kpiInc: "Total Income", kpiExp: "Total Expenses", kpiBal: "Current Balance", kpiInvested: "To Investments (Saved)", kpiSavRate: "Total Savings Rate", kpiAvgInc: "Avg Monthly Income", kpiAvgExp: "Avg Monthly Expenses", kpiMom: "MoM Expense Comparison", budgetStatus: "Monthly Budget Status", weeklyBudgetTitle: "Weekly Budget Tracker", weeklyBudgetHint: "The weekly target is derived from the monthly budget, prorated by days.", groupsTitle: "Expense Groups", groupsHint: "Each group budget is the sum of its category budgets.", sixMonthTitle: "Expenses by Category — 6 Months", trendTitle: "Income vs Expenses Trend", waterfallTitle: "Cash Flow (Waterfall)", heatmapTitle: "Weekly Expense Heatmap (This Month)",
+            healthTitle: "Financial Health", analyzing: "Analyzing...", kpiInc: "Total Income", kpiExp: "Total Expenses", kpiBal: "Current Balance", kpiInvested: "To Investments (Saved)", kpiSavRate: "Total Savings Rate", kpiAvgInc: "Avg Monthly Income", kpiAvgExp: "Avg Monthly Expenses", kpiMom: "MoM Expense Comparison", budgetStatus: "Monthly Budget Status", weeklyBudgetTitle: "Weekly Budget Tracker", weeklyBudgetHint: "The weekly target is derived from the monthly budget, prorated by days.", groupsTitle: "Expense Groups", groupsHint: "Each group budget is the sum of its category budgets.", sixMonthTitle: "Expenses by Category — 6 Months", trendTitle: "Income vs Expenses Trend", 
             aiHeading: "🤖 Financial Strategy Agent", aiDesc1: "The AI will analyze your spending and tell you the truth about your financial management. <strong>It is instructed NOT to tell you what you want to hear</strong>, but to objectively and directly criticize unnecessary expenses and provide real solutions.", aiBtn: "✨ Analyze My Financial Portfolio vs Predictions", aiLoading: "Integrating prediction data to objective LLM model, please wait...",
             autoCatBadge: "✨ Auto-Detected", addTxTitle: "<i class='fas fa-edit'></i> Add Transaction", lblDate: "Date", lblDesc: "Description", descPlaceholder: "e.g., Honeymoon in Thailand...", lblAmount: "Amount", lblCat: "Category", lblTags: "Tags (Comma separated)", lblInstallments: "Installments", btnAdd: "Add to System", journalTitle: "Transaction Journal", searchPlaceholder: "Search...", opt100: "Last 100", opt500: "Last 500", optAll: "Show All", btnImportExcel: "<i class='fas fa-file-import'></i> Import", thDate: "Date", thDesc: "Description", thTags: "Tags", thCat: "Category", thAmount: "Amount", thActions: "Actions",
             monthlyDetailTitle: "Detailed Monthly Analysis", monthInc: "Income", monthExp: "Expenses", monthBal: "Balance", monthInvested: "To Investments (Saved)", chartDaily: "Daily Breakdown", chartCat: "Category Breakdown", chartCatBar: "Expenses by Category",
@@ -1494,8 +1478,6 @@
         renderExpenseGroups();
         renderSixMonthTable();
         renderTrendChart();
-        renderWaterfallChart();
-        renderHeatmap();
         updateHealthScore();
     }
 
@@ -2167,99 +2149,6 @@
                 }
             }
         });
-    }
-
-    function renderWaterfallChart() {
-        const thisMonth = ymLocal(new Date());
-        const data = db.filter(t => t.date.startsWith(thisMonth));
-
-        let inc = data.filter(t=>t.type==='income').reduce((a,b)=>a+b.amount,0);
-
-        const catSpends = {};
-        data.filter(t=>t.type==='expense').forEach(t => {
-            catSpends[t.cat] = (catSpends[t.cat] || 0) + t.amount;
-        });
-
-        const sortedCats = Object.entries(catSpends).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-        let labels = [currentLang==='he'?'הכנסות':'Income'];
-        let spacerData = [0];
-        let valueData = [inc];
-        let bgColors = ['#10b981'];
-
-        let currentLevel = inc;
-
-        sortedCats.forEach(([catName, amt]) => {
-            labels.push(catName);
-            spacerData.push(currentLevel - amt);
-            valueData.push(amt);
-            bgColors.push(getCatColor(catName));
-            currentLevel -= amt;
-        });
-
-        labels.push(currentLang==='he'?'יתרה':'Balance');
-        spacerData.push(0);
-        valueData.push(currentLevel);
-        bgColors.push('#3b82f6');
-
-        if(charts.waterfall) charts.waterfall.destroy();
-        charts.waterfall = new Chart(document.getElementById('chartWaterfall'), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'Spacer', data: spacerData, backgroundColor: 'transparent', stack: 'waterfall' },
-                    { label: 'Value', data: valueData, backgroundColor: bgColors, borderRadius: 4, stack: 'waterfall' }
-                ]
-            },
-            options: {
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { filter: function(tooltipItem) { return tooltipItem.datasetIndex !== 0; } }
-                },
-                scales: {
-                    x: { stacked: true },
-                    y: { stacked: true, beginAtZero: true }
-                }
-            }
-        });
-    }
-
-    function renderHeatmap() {
-        const container = document.getElementById('weekly-heatmap');
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = today.getMonth();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-        const dayAmounts = {};
-        db.filter(t => t.type==='expense' && t.date.startsWith(ymLocal(today))).forEach(t => {
-            const d = parseInt(t.date.slice(8,10));
-            dayAmounts[d] = (dayAmounts[d] || 0) + t.amount;
-        });
-
-        let maxVal = Math.max(...Object.values(dayAmounts), 1);
-
-        let html = '<div class="heatmap-grid">';
-        const daysHeb = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
-        const daysEn = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-        const headers = currentLang === 'he' ? daysHeb : daysEn;
-
-        headers.forEach(h => html += `<div class="heatmap-header">${h}</div>`);
-
-        let firstDayIndex = new Date(year, month, 1).getDay();
-        for(let i=0; i<firstDayIndex; i++) html += `<div></div>`;
-
-        for(let d=1; d<=daysInMonth; d++) {
-            const amt = dayAmounts[d] || 0;
-            const intensity = amt === 0 ? 0 : Math.max(0.1, amt / maxVal);
-            const bgColor = amt === 0 ? '#f3f4f6' : `rgba(239, 68, 68, ${intensity})`;
-            html += `<div class="heatmap-cell" style="background:${bgColor};" title="${Math.round(amt).toLocaleString()} ₪">${d}</div>`;
-        }
-
-        html += '</div>';
-        container.innerHTML = html;
     }
 
     // --- AI ADVISOR LOGIC ---
@@ -4454,7 +4343,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.28 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.29 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
