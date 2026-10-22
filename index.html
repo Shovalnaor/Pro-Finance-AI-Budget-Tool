@@ -11,7 +11,7 @@
          נשארו רק שתי הדירקטיבות שאינן נוגעות ברשת של Firebase ואינן יכולות לשבור כלום.
          ההגנה מ-XSS כאן היא esc() ו-DOMPurify, שאינן תלויות ב-CSP. -->
     <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'">
-    <title>PRO-FINANCE DIAMOND V3.27 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.28 + AI Intelligence</title>
 
     <!-- SECURITY: כל הספריות החיצוניות נעולות לגרסה מדויקת.
          השלם integrity="sha384-..." לכל שורה לפני העלאה — ראה הוראות במסמך הליווי. -->
@@ -684,7 +684,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.27 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.28 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -798,6 +798,14 @@
                 <label data-i18n="modGoalLink">סנכרון אוטומטי מקטגוריה</label>
                 <select id="goal-link-cat" class="input-control"></select>
                 <div style="font-size:0.75rem; color:#6b7280; margin-top:5px;" data-i18n="modGoalLinkHint">כל תנועה בקטגוריה שנבחרה תיספר אוטומטית כהפקדה ליעד.</div>
+            </div>
+            <div class="input-group" style="margin-top:10px;">
+                <label data-i18n="modGoalMeasure">איך למדוד את ההתקדמות?</label>
+                <select id="goal-measure" class="input-control">
+                    <option value="deposits">כמה הפרשנו — סכום ההפקדות שביצענו</option>
+                    <option value="value">כמה יש בפועל — שווי התיק כולל תשואה</option>
+                </select>
+                <div style="font-size:0.75rem; color:#6b7280; margin-top:5px;" data-i18n="modGoalMeasureHint">"כמה הפרשנו" מודד את ההתנהלות שלך ומתעלם מתנודות השוק. "כמה יש בפועל" מתאים ליעד שצריך לכסות סכום, כמו קרן חירום.</div>
             </div>
             <div style="display:flex; gap:10px; margin-top:25px;">
                 <button class="btn-primary" style="flex:1;" id="goal-modal-save" onclick="addGoal()">צור יעד</button>
@@ -2950,12 +2958,26 @@
     // יתרת היעד. שים לב: אחזקה מקושרת היא *יתרה* (שווי התיק היום), ותנועות בקטגוריה
     // המקושרת הן *תזרים* שכבר נכנס לאותה יתרה. חיבור של השניים סופר את אותו כסף פעמיים,
     // ולכן כשיש אחזקה מקושרת היא גוברת על סכום הקטגוריה.
+    // שתי שאלות שונות, ולכן שתי דרכי מדידה:
+    //   deposits — "כמה הצלחנו להפריש" (תזרים ההפקדות). תשואה לא נספרת, וזו הכוונה.
+    //   value    — "כמה יש לנו בפועל" (שווי התיק היום, כולל תשואה).
+    // לעולם לא מחברים ביניהן: ההפקדות הן בדיוק הכסף שמרכיב את השווי.
+    function goalMeasure(g) {
+        if (g.measure === 'deposits' || g.measure === 'value') return g.measure;
+        return g.linkedCat ? 'deposits' : 'value';   // ברירת מחדל ליעדים ישנים
+    }
+
     function goalBasis(g) {
         const manual = Number(g.saved) || 0;
         const fromHoldings = goalHoldings(g.id);
         const fromCat = linkedSum(g.linkedCat);
-        if (fromHoldings > 0) return { total: manual + fromHoldings, manual: manual, holdings: fromHoldings, cat: fromCat, source: 'holdings' };
-        return { total: manual + fromCat, manual: manual, holdings: 0, cat: fromCat, source: g.linkedCat ? 'cat' : 'manual' };
+        const measure = goalMeasure(g);
+        const useValue = measure === 'value' && fromHoldings > 0;
+        return {
+            total: manual + (useValue ? fromHoldings : fromCat),
+            manual: manual, holdings: fromHoldings, cat: fromCat,
+            measure: measure, source: useValue ? 'holdings' : (g.linkedCat ? 'cat' : 'manual')
+        };
     }
 
     function goalSaved(g) { return goalBasis(g).total; }
@@ -2977,6 +2999,7 @@
         document.getElementById('goal-name').value = '';
         document.getElementById('goal-target').value = '';
         fillGoalLinkSelect('');
+        document.getElementById('goal-measure').value = 'deposits';
         document.getElementById('goal-modal-title').innerText = currentLang==='he' ? 'יעד חיסכון חדש' : 'New Savings Goal';
         document.getElementById('goal-modal-save').innerText  = currentLang==='he' ? 'צור יעד' : 'Create Goal';
         openModal('goal-modal');
@@ -2994,6 +3017,7 @@
         document.getElementById('goal-name').value = g.name;
         document.getElementById('goal-target').value = g.target;
         fillGoalLinkSelect(g.linkedCat || '');
+        document.getElementById('goal-measure').value = goalMeasure(g);
         document.getElementById('goal-modal-title').innerText = currentLang==='he' ? 'עריכת יעד' : 'Edit Goal';
         document.getElementById('goal-modal-save').innerText  = currentLang==='he' ? 'עדכן' : 'Update';
         openModal('goal-modal');
@@ -3039,14 +3063,24 @@
             const linkBadge = g.linkedCat
                 ? `<div style="font-size:0.75rem; font-weight:700; color:#14b8a6; margin-bottom:10px;">🔗 ${currentLang==='he'?'מסונכרן עם':'Synced with'}: ${g.linkedCat}${manual !== 0 ? ` · ${manual>0?'+':''}${fmtAmount(manual)} ₪ ${currentLang==='he'?'ידני':'manual'}` : ''}</div>`
                 : '';
-            const holdBadge = fromHoldings > 0
-                ? `<div style="font-size:0.75rem; font-weight:700; color:#0f766e; margin-bottom:10px;">💼 ${currentLang==='he'?'היתרה נלקחת משווי התיק':'Balance taken from portfolio'}: ${fmtAmount(fromHoldings)} ₪</div>`
-                : '';
-            const dupNote = (fromHoldings > 0 && basis.cat > 0)
-                ? `<div style="font-size:0.72rem; color:#6b7280; margin-bottom:10px; line-height:1.5;">${currentLang==='he'
-                        ? `ההפקדות בקטגוריה "${g.linkedCat}" (${fmtAmount(basis.cat)} ₪) כבר כלולות בשווי התיק ולכן לא נספרות בנפרד.`
-                        : `Deposits in "${g.linkedCat}" (${fmtAmount(basis.cat)} ₪) are already inside the portfolio value and are not counted twice.`}</div>`
-                : '';
+            const byDeposits = basis.measure === 'deposits';
+            const holdBadge = `<div style="font-size:0.75rem; font-weight:700; color:#0f766e; margin-bottom:10px;">${
+                byDeposits ? '📥 ' + (currentLang==='he' ? 'נמדד לפי ההפקדות שביצעת' : 'Measured by deposits')
+                           : '💼 ' + (currentLang==='he' ? 'נמדד לפי שווי התיק בפועל' : 'Measured by portfolio value')}</div>`;
+
+            // המספר השני מוצג כהקשר, לא כתוספת — חיבור שלהם היה ספירה כפולה.
+            let altNote = '';
+            if (byDeposits && fromHoldings > 0) {
+                const gain = fromHoldings - basis.cat - manual;
+                altNote = `<div style="font-size:0.72rem; color:#6b7280; margin-bottom:10px; line-height:1.5;">${currentLang==='he'
+                    ? `שווי הקרנות המקושרות היום: ${fmtAmount(fromHoldings)} ₪${gain > 0 ? ` — מתוכם ${fmtAmount(gain)} ₪ תשואה, שלא נספרת ביעד הזה.` : '.'}`
+                    : `Linked funds are worth ${fmtAmount(fromHoldings)} ₪ today; returns are not counted in this goal.`}</div>`;
+            } else if (!byDeposits && basis.cat > 0) {
+                altNote = `<div style="font-size:0.72rem; color:#6b7280; margin-bottom:10px; line-height:1.5;">${currentLang==='he'
+                    ? `ההפקדות בקטגוריה "${esc(g.linkedCat)}" (${fmtAmount(basis.cat)} ₪) כבר כלולות בשווי התיק ולכן לא נספרות בנפרד.`
+                    : `Deposits in "${esc(g.linkedCat)}" (${fmtAmount(basis.cat)} ₪) are already inside the portfolio value.`}</div>`;
+            }
+            const dupNote = altNote;
             const depLabel = g.linkedCat
                 ? (currentLang === 'he' ? '+ הפקדה ידנית נוספת' : '+ Extra Manual Deposit')
                 : (currentLang === 'he' ? '+ הוספת הפקדה' : '+ Add Deposit');
@@ -3464,6 +3498,7 @@
         const name = document.getElementById('goal-name').value.trim();
         const target = parseFloat(document.getElementById('goal-target').value);
         const linkedCat = (document.getElementById('goal-link-cat') || {}).value || '';
+        const measure = (document.getElementById('goal-measure') || {}).value || 'deposits';
 
         if (!name) { showToast(currentLang==='he' ? '⚠️ חסר שם ליעד' : '⚠️ Goal name required'); return; }
         if (isNaN(target) || target <= 0) { showToast(currentLang==='he' ? '⚠️ סכום היעד חייב להיות חיובי' : '⚠️ Target must be positive'); return; }
@@ -3493,6 +3528,7 @@
             g.name = name;
             g.target = target;
             g.linkedCat = linkedCat;
+            g.measure = measure;
             editingGoalId = null;
             saveData();
             renderAll();
@@ -3501,7 +3537,7 @@
         } else {
             goals.push({
                 id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-                name, target, saved: 0, linkedCat
+                name, target, saved: 0, linkedCat, measure
             });
             saveData();
             renderAll();
@@ -4418,7 +4454,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.27 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.28 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
