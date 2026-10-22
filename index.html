@@ -11,7 +11,7 @@
          נשארו רק שתי הדירקטיבות שאינן נוגעות ברשת של Firebase ואינן יכולות לשבור כלום.
          ההגנה מ-XSS כאן היא esc() ו-DOMPurify, שאינן תלויות ב-CSP. -->
     <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'">
-    <title>PRO-FINANCE DIAMOND V3.29 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.30 + AI Intelligence</title>
 
     <!-- SECURITY: כל הספריות החיצוניות נעולות לגרסה מדויקת.
          השלם integrity="sha384-..." לכל שורה לפני העלאה — ראה הוראות במסמך הליווי. -->
@@ -54,7 +54,8 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { font-family: 'Heebo', sans-serif; margin: 0; background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; transition: background 0.3s; }
+        /* 100dvh: ב-Safari ל-iOS ‏100vh כולל את שורת הכתובת, ולכן תחתית המסך נחתכה. */
+        body { font-family: 'Heebo', sans-serif; margin: 0; background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; transition: background 0.3s; }
 
         header { background: var(--header-bg); padding: 15px 20px; color: white; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; }
 
@@ -223,6 +224,68 @@
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
 
+        /* ===== נייד =====
+           שלוש בעיות שתוקנו כאן:
+           1. כרטיס KPI תפס שורה שלמה, כך שתמונת המצב דרשה גלילה של כמה מסכים.
+           2. גופן קטן מ-16px בשדה קלט גורם ל-iOS לבצע זום אוטומטי בלחיצה.
+           3. ילד של grid/flex לא מתכווץ כברירת מחדל (min-width:auto), ולכן
+              טבלה רחבה מתחה את הכרטיס במקום לגלול בתוך העטיפה שלה. */
+        @media (max-width: 640px) {
+            .container { padding: 12px; }
+            header { padding: 10px 14px; }
+            header .brand { font-size: 1.1rem !important; gap: 8px !important; }
+
+            .tab-btn { padding: 10px 11px; font-size: 0.82rem; }
+
+            .card { padding: 14px; margin-bottom: 14px; border-radius: 10px; }
+            .card h2 { font-size: 1.1rem; }
+            .card h3 { font-size: 1rem; }
+
+            /* שני כרטיסים בשורה במקום אחד */
+            .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+            .card-grid-2 { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+            .kpi-card { padding: 12px 10px; border-top-width: 4px; }
+            .kpi-card h3 { font-size: 0.68rem; line-height: 1.3; }
+            .kpi-card .value { font-size: 1.12rem; margin-top: 5px; }
+            .kpi-card .value + div, .kpi-card > div[style*="font-size:0.75rem"] { font-size: 0.65rem !important; }
+
+            /* טופס הוספת תנועה: שתי עמודות במקום שבע שורות */
+            #form-add { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+            #form-add > div:nth-child(2), #form-add > button { grid-column: 1 / -1; }
+
+            .chart-container { height: 230px; }
+            .modal-box { padding: 20px; max-height: 88vh; overflow-y: auto; }
+
+            /* כל ילד של grid/flex חייב min-width:0 כדי ש-overflow-x של טבלה יעבוד */
+            .card-grid > *, .card-grid-2 > *, .tab-pane .card { min-width: 0; }
+            .card [style*="overflow-x"] { -webkit-overflow-scrolling: touch; }
+            #tbl-six-month, #pf-table, #tbl-journal, #tbl-groups { font-size: 0.78rem; }
+            /* רוחב מינימלי: בלי זה העמודות נדחסות והסכום נחתך. עדיף גלילה אופקית בתוך הכרטיס. */
+            #tbl-journal { min-width: 408px; }
+            /* התיאור נחתך בשלוש נקודות כדי שעמודת הסכום תישאר שלמה על המסך */
+            #tbl-journal td:nth-child(2) { max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
+            /* התגית מתקצרת כדי שעמודת הסכום תישאר על המסך בלי גלילה */
+            #tbl-journal .category-pill { display: inline-block; max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+            #tbl-journal td, #tbl-journal th { padding-left: 4px; padding-right: 4px; }
+            #pf-table { min-width: 560px; }
+            /* עמודת התגיות כמעט תמיד ריקה ועולה רוחב יקר */
+            #tbl-journal th:nth-child(3), #tbl-journal td:nth-child(3) { display: none; }
+            #tbl-journal td, #tbl-journal th { white-space: nowrap; }
+
+            /* שורת הכלים של היומן גלשה מחוץ למסך — מרשים לה לרדת שורה */
+            #journal-search { width: 100% !important; }
+            #journal-limit { width: 100% !important; }
+            #journal-search, #journal-limit { min-width: 0; }
+            .card > div[style*="justify-content:space-between"] > div[style*="display:flex"] { flex-wrap: wrap; width: 100%; }
+            .card > div[style*="justify-content:space-between"] > div[style*="display:flex"] > * { flex: 1 1 140px; }
+
+            .pf-todo { flex-direction: column; align-items: stretch; text-align: center; gap: 12px; padding: 14px; }
+            .pf-stack div { font-size: 0.68rem; }
+
+            /* iOS מבצע זום בלחיצה על שדה עם גופן קטן מ-16px */
+            input, select, textarea, .input-control { font-size: 16px; }
+        }
+
         /* תיקון: מסך ייבוא ידידותי לנייד */
         @media (max-width: 640px) {
             #import-tbl thead { display: none; }
@@ -244,7 +307,7 @@
     </div>
 
     <header>
-        <div style="font-weight:900; font-size:1.4rem; display:flex; align-items:center; gap:12px;">
+        <div class="brand" style="font-weight:900; font-size:1.4rem; display:flex; align-items:center; gap:12px;">
             <i class="fas fa-gem" style="color: #fbbf24;"></i> Pro-Finance
         </div>
         <div style="display:flex; gap:12px; align-items:center;">
@@ -668,7 +731,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.29 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.30 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -4343,7 +4406,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.29 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.30 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
