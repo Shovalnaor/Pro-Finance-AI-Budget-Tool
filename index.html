@@ -11,7 +11,7 @@
          נשארו רק שתי הדירקטיבות שאינן נוגעות ברשת של Firebase ואינן יכולות לשבור כלום.
          ההגנה מ-XSS כאן היא esc() ו-DOMPurify, שאינן תלויות ב-CSP. -->
     <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'">
-    <title>PRO-FINANCE DIAMOND V3.26 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.27 + AI Intelligence</title>
 
     <!-- SECURITY: כל הספריות החיצוניות נעולות לגרסה מדויקת.
          השלם integrity="sha384-..." לכל שורה לפני העלאה — ראה הוראות במסמך הליווי. -->
@@ -684,7 +684,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.26 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.27 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -2947,7 +2947,18 @@
         return holdings.filter(h => h.goalId === goalId).reduce((a, h) => a + (Number(h.value) || 0), 0);
     }
 
-    function goalSaved(g) { return (Number(g.saved) || 0) + linkedSum(g.linkedCat) + goalHoldings(g.id); }
+    // יתרת היעד. שים לב: אחזקה מקושרת היא *יתרה* (שווי התיק היום), ותנועות בקטגוריה
+    // המקושרת הן *תזרים* שכבר נכנס לאותה יתרה. חיבור של השניים סופר את אותו כסף פעמיים,
+    // ולכן כשיש אחזקה מקושרת היא גוברת על סכום הקטגוריה.
+    function goalBasis(g) {
+        const manual = Number(g.saved) || 0;
+        const fromHoldings = goalHoldings(g.id);
+        const fromCat = linkedSum(g.linkedCat);
+        if (fromHoldings > 0) return { total: manual + fromHoldings, manual: manual, holdings: fromHoldings, cat: fromCat, source: 'holdings' };
+        return { total: manual + fromCat, manual: manual, holdings: 0, cat: fromCat, source: g.linkedCat ? 'cat' : 'manual' };
+    }
+
+    function goalSaved(g) { return goalBasis(g).total; }
 
     function fillGoalLinkSelect(selected) {
         const sel = document.getElementById('goal-link-cat');
@@ -3021,12 +3032,20 @@
                 projectionText = currentLang === 'he' ? `קצב החיסכון אינו מספיק ⚠️` : `Savings rate insufficient ⚠️`;
             }
 
+            const basis = goalBasis(g);
+            const fromHoldings = basis.holdings;
+
+            // כשהיתרה נלקחת מהתיק, סכום הקטגוריה המקושרת לא מתווסף — הוא כבר בתוכה.
             const linkBadge = g.linkedCat
                 ? `<div style="font-size:0.75rem; font-weight:700; color:#14b8a6; margin-bottom:10px;">🔗 ${currentLang==='he'?'מסונכרן עם':'Synced with'}: ${g.linkedCat}${manual !== 0 ? ` · ${manual>0?'+':''}${fmtAmount(manual)} ₪ ${currentLang==='he'?'ידני':'manual'}` : ''}</div>`
                 : '';
-            const fromHoldings = goalHoldings(g.id);
             const holdBadge = fromHoldings > 0
-                ? `<div style="font-size:0.75rem; font-weight:700; color:#0f766e; margin-bottom:10px;">💼 ${currentLang==='he'?'מתוכו מקרן ייעודית':'From portfolio'}: ${fmtAmount(fromHoldings)} ₪</div>`
+                ? `<div style="font-size:0.75rem; font-weight:700; color:#0f766e; margin-bottom:10px;">💼 ${currentLang==='he'?'היתרה נלקחת משווי התיק':'Balance taken from portfolio'}: ${fmtAmount(fromHoldings)} ₪</div>`
+                : '';
+            const dupNote = (fromHoldings > 0 && basis.cat > 0)
+                ? `<div style="font-size:0.72rem; color:#6b7280; margin-bottom:10px; line-height:1.5;">${currentLang==='he'
+                        ? `ההפקדות בקטגוריה "${g.linkedCat}" (${fmtAmount(basis.cat)} ₪) כבר כלולות בשווי התיק ולכן לא נספרות בנפרד.`
+                        : `Deposits in "${g.linkedCat}" (${fmtAmount(basis.cat)} ₪) are already inside the portfolio value and are not counted twice.`}</div>`
                 : '';
             const depLabel = g.linkedCat
                 ? (currentLang === 'he' ? '+ הפקדה ידנית נוספת' : '+ Extra Manual Deposit')
@@ -3048,10 +3067,13 @@
                         <text x="18" y="20.35" class="percentage">${Math.round(pct)}%</text>
                     </svg>
 
-                    <div style="font-size:1.1rem; font-weight:800; margin-bottom:5px;">${fmtAmount(saved)} / ${fmtAmount(g.target)} ₪</div>
+                    <div style="font-size:1.1rem; font-weight:800; margin-bottom:5px;">
+                        <span dir="ltr" style="display:inline-block;">${fmtAmount(saved)} / ${fmtAmount(g.target)}</span> ₪
+                    </div>
                     <div style="font-size:0.85rem; color:#6b7280; margin-bottom:8px; font-weight:bold;">${projectionText}</div>
                     ${linkBadge}
                     ${holdBadge}
+                    ${dupNote}
 
                     <button class="btn-primary btn-outline" style="width:100%; font-size:0.8rem;" onclick="depositGoal('${g.id}')">${depLabel}</button>
                 </div>
@@ -3461,8 +3483,10 @@
                 if (confirm(msg)) g.saved = 0;
             }
             // ניתוק קישור — מקפיאים את הסכום הנוכחי כדי שההתקדמות לא תיעלם
+            // מקפיאים רק את חלק הקטגוריה: שווי אחזקות מקושרות ממשיך להיספר מעצמו,
+            // ושמירה שלו כאן הייתה מחזירה את הספירה הכפולה בדלת האחורית.
             if (!linkedCat && prevLink) {
-                g.saved = goalSaved(g);
+                g.saved = manual + linkedSum(prevLink);
                 showToast(currentLang==='he' ? 'הקישור בוטל — הסכום הנוכחי נשמר כסכום ידני' : 'Unlinked — current amount kept as manual');
             }
 
@@ -4394,7 +4418,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.26 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.27 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
