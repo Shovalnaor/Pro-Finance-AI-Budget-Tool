@@ -11,7 +11,7 @@
          נשארו רק שתי הדירקטיבות שאינן נוגעות ברשת של Firebase ואינן יכולות לשבור כלום.
          ההגנה מ-XSS כאן היא esc() ו-DOMPurify, שאינן תלויות ב-CSP. -->
     <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'">
-    <title>PRO-FINANCE DIAMOND V3.30 + AI Intelligence</title>
+    <title>PRO-FINANCE DIAMOND V3.31 + AI Intelligence</title>
 
     <!-- SECURITY: כל הספריות החיצוניות נעולות לגרסה מדויקת.
          השלם integrity="sha384-..." לכל שורה לפני העלאה — ראה הוראות במסמך הליווי. -->
@@ -731,7 +731,7 @@
                     <h3 style="margin-bottom:15px;" data-i18n="setStatsTitle"><i class="fas fa-chart-pie"></i> סטטיסטיקות</h3>
                     <div style="font-size: 1.1rem; line-height: 1.8;">
                         <div><span data-i18n="statRecords">רשומות במערכת:</span> <strong id="stat-records-count">0</strong></div>
-                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.30 Intelligence</strong></div>
+                        <div><span data-i18n="statVersion">גרסה:</span> <strong>V3.31 Intelligence</strong></div>
                         <div style="color:#9ca3af; font-size:0.9rem; margin-top:8px;">
                             <span data-i18n="statLastUpdate">עדכון אחרון:</span> <strong>2026</strong>
                         </div>
@@ -2165,14 +2165,30 @@
     }
 
     function renderTrendChart() {
+        // חלון של 6 חודשי לוח אחרונים — אותו חלון בדיוק כמו טבלת 6 החודשים שמעל.
+        // קודם נבנתה כאן רשימת החודשים *שיש בהם תנועות* בלבד, ולכן חודש ריק פשוט
+        // נעלם מהציר (אוגוסט וספטמבר הוצגו צמודים כאילו הם רצופים), ו-slice(-6)
+        // יכול היה לשלוף חודשים מלפני שנה. שתי הלשוניות הראו חודשים שונים.
+        const keys = [];
+        for (let i = 5; i >= 0; i--) keys.push(ymOffset(-i));
+
         const months = {};
+        keys.forEach(k => months[k] = { inc: 0, exp: 0 });
         db.forEach(t => {
+            if (!t.date) return;
             const m = t.date.slice(0,7);
-            if(!months[m]) months[m] = {inc:0, exp:0};
-            if(t.type==='income') months[m].inc += t.amount;
-            else if(t.type==='expense') months[m].exp += t.amount;
+            if (!months[m]) return;                     // מחוץ לחלון
+            if (t.type === 'income') months[m].inc += (Number(t.amount) || 0);
+            else if (t.type === 'expense') months[m].exp += (Number(t.amount) || 0);
         });
-        const labels = Object.keys(months).sort().slice(-6);
+
+        const thisMonth = ymLocal(new Date());
+        const fmtM = m => m.slice(5,7) + '/' + m.slice(2,4);
+        // החודש הנוכחי עדיין לא נגמר — בלי הסימון נראה כאילו ההוצאות צנחו
+        const labels = keys.map(k => k === thisMonth
+            ? [fmtM(k), currentLang === 'he' ? '(חלקי)' : '(partial)']
+            : fmtM(k));
+
         const lblInc = currentLang === 'he' ? 'הכנסות' : 'Income';
         const lblExp = currentLang === 'he' ? 'הוצאות' : 'Expenses';
 
@@ -2184,14 +2200,19 @@
             data: {
                 labels: labels,
                 datasets: [
-                    { label: lblInc, data: labels.map(l=>months[l].inc), backgroundColor: '#10b981', borderRadius: 5 },
-                    { label: lblExp, data: labels.map(l=>months[l].exp), backgroundColor: '#ef4444', borderRadius: 5 }
+                    { label: lblInc, data: keys.map(k=>months[k].inc), backgroundColor: '#10b981', borderRadius: 5 },
+                    { label: lblExp, data: keys.map(k=>months[k].exp), backgroundColor: '#ef4444', borderRadius: 5 }
                 ]
             },
             options: {
                 maintainAspectRatio: false,
+                scales: { x: { reverse: currentLang === 'he' } },
                 plugins: {
-                    legend: { position: 'bottom' },
+                    legend: { position: 'bottom', rtl: currentLang === 'he' },
+                    tooltip: {
+                        rtl: currentLang === 'he',
+                        callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtAmount(ctx.parsed.y)} ₪` }
+                    },
                     annotation: totalBudget > 0 ? {
                         annotations: {
                             budgetLine: {
@@ -4406,7 +4427,7 @@ ${recentTx.length > 0 ? `<table>
 </table>` : '<p style="color:#9ca3af;">אין תנועות.</p>'}
 
 <div class="footer">
-  💎 Pro-Finance Diamond V3.30 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
+  💎 Pro-Finance Diamond V3.31 | הופק ב-${reportDate} | מסונכרן מול Firebase Realtime Database
 </div>
 </body>
 </html>`;
